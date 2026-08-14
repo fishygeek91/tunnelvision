@@ -180,14 +180,19 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       strength (fit proposal energy-change distributions per rung). This
       is the figure that names the paper. T_eff rises with λ
       (diabetes 1.86 → 2.28; ρ=0.9  1.70 → 2.04).
-- [ ] Compare: single best rung vs. ladder vs. classical parallel
+- [x] Compare: single best rung vs. ladder vs. classical parallel
       tempering, exact tier at p=10 + hardest ρ=0.9 instance.
       Rung-vs-ladder is in `results/E03/summary.md` (ladder matches
-      its best rung, loses to ADS). Parallel tempering is deferred.
+      its best rung, loses to ADS). Parallel tempering and the
+      Aer-realistic hot rung (λ̂ = 0.65) are in
+      `results/E03/pt/summary.md`. PT raises ESS/step; charged per
+      target-eval it is 1.44× ADS on diabetes and 0.54× at ρ=0.9.
+      The hot rung shrinks the gap. Nothing beats ADS.
 - [x] `results/E03/summary.md` — outcome at p=10 exact tier: **hurts /
       no help**. Noise heats the proposal; the ladder does not beat
-      its coldest rung; nothing beats ADS. All three outcomes remain
-      open at hotter (Aer-realistic) λ and vs. parallel tempering.
+      its coldest rung; nothing beats ADS. The hotter Aer-realistic
+      λ̂ = 0.65 rung and classical PT are in `results/E03/pt/summary.md`
+      and do not change the headline.
 
 ### WP6 — Hardware (P2 until E02 gates, 🔴)
 

@@ -1,7 +1,7 @@
 # E03 — Maxwell's Daemon, phase 1 (simulator, exact tier).
 # Question: does a fixed noise ladder mix faster than its best
 # single rung, and does noise heat the proposal? Parallel tempering
-# is the deferred third arm.
+# is the third arm (config_pt.yaml / run_pt.py).
 prior_inclusion: 0.5
 noise_levels: [0.0, 0.001, 0.005, 0.02, 0.1]
 datasets:

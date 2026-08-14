@@ -78,9 +78,14 @@ column. A bigger gap that costs more wall-clock is not a win.
 heat the proposal — that part of the Maxwell's Daemon story is
 real. A uniform mixture of those rungs does not beat its coldest
 (best) rung, and no quench rung beats ADS. The ladder is what a
-mixture of already-losing kernels has to be: an average. Whether
-a hotter slice (Aer-realistic λ̂ ≈ 0.65) or classical parallel
-tempering changes that is the next measurement, not this one.
+mixture of already-losing kernels has to be: an average.
+
+The deferred third arm is no longer deferred. Classical parallel
+tempering and the Aer-realistic hot rung (λ̂ = 0.65) are in
+`results/E03/pt/summary.md`. The hot rung shrinks the gap
+further. PT raises ESS/step (and cuts diabetes PIP error) but
+does not beat ADS on ESS/eval at ρ=0.9, and it does not make
+the quench win. Same headline.
 
 ## Notes
 
@@ -88,5 +93,5 @@ tempering changes that is the next measurement, not this one.
 - The ladder is a uniform mixture of *fixed* rungs. Choosing
   the rung from chain state would need log-q or diminishing
   adaptation — that is AdaptiveMixture (WP7), not this file.
-- Classical parallel tempering is the deferred third arm.
+- Classical parallel tempering is in `results/E03/pt/summary.md`.
 

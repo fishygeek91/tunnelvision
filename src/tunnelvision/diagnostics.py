@@ -3,8 +3,9 @@
 Two evaluation tiers:
     exact (n <= ~14): spectral gap of the full transition matrix — airtight.
     sampled (any n):  integrated autocorrelation time, ESS per step and per
-                      QPU-second, PIP error vs. exact enumeration (p <= ~20)
-                      or vs. long-run pooled reference (p > 20).
+                      QPU-second, split-R̂ across independent chains, PIP
+                      error vs. exact enumeration (p <= ~20) or vs. a
+                      long-run pooled reference (p > 20).
 """
 
 from __future__ import annotations
@@ -110,6 +111,52 @@ def ess(x: np.ndarray) -> float:
         raise ValueError("x must be a 1-d series")
     tau = integrated_autocorrelation_time(series)
     return float(series.size / tau)
+
+
+def rhat(chains: np.ndarray) -> float:
+    """Split-R̂ of a scalar functional (Gelman & Rubin; Vehtari et al. 2021).
+
+    Each of the *m* independent chains is split in half, giving 2*m*
+    sequences of length *n* = N//2. Then
+
+        W  = mean of the 2*m* within-chain sample variances
+        B  = n × sample variance of the 2*m* chain means
+        var+ = ((n−1)/n) W + B/n
+        R̂ = √(var+ / W)
+
+    R̂ → 1 when the split halves agree. R̂ ≫ 1 is the stuck-chain
+    detector E02b needs at high ρ — a single long chain that never
+    leaves one mode looks converged, four chains parked in different
+    modes do not. Rank-normalization is not applied; this is the
+    textbook split-chain version.
+
+    Parameters
+    ----------
+    chains:
+        Array of shape ``(n_chains, n_draws)``. Need ≥2 chains and ≥4
+        draws (so each half has at least two samples).
+    """
+    arr = np.asarray(chains, dtype=np.float64)
+    if arr.ndim != 2:
+        raise ValueError("chains must have shape (n_chains, n_draws)")
+    n_chains, n_draws = int(arr.shape[0]), int(arr.shape[1])
+    if n_chains < 2:
+        raise ValueError(f"need at least 2 chains, got {n_chains}")
+    if n_draws < 4:
+        raise ValueError(f"need at least 4 draws per chain, got {n_draws}")
+    if not np.isfinite(arr).all():
+        raise ValueError("chains contain non-finite values")
+
+    n = n_draws // 2
+    split = arr[:, : 2 * n].reshape(n_chains * 2, n)
+    means = split.mean(axis=1)
+    within = split.var(axis=1, ddof=1)
+    w = float(within.mean())
+    between = float(n * means.var(ddof=1))
+    if w <= 0.0:
+        return 1.0 if between <= 0.0 else float("inf")
+    var_plus = ((n - 1) / n) * w + between / n
+    return float(np.sqrt(var_plus / w))
 
 
 def pip_error(states: np.ndarray, exact_pips: np.ndarray) -> float:

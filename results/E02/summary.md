@@ -63,3 +63,26 @@ grows with ρ. PIP error after a few thousand draws is Monte Carlo
 - Headline comparison is the exact gap. ESS/sec here is tabulated-Q, not QPU time.
 - E02b (ρ-sweep, sampled tier at p=20–27) is not in this run.
 
+## E02b — ρ-sweep (exact tier)
+
+Full write-up: [`rho_sweep/summary.md`](rho_sweep/summary.md).
+
+On equicorrelated synthetics (p=10, n=120, k_true=3, SNR=2), quench
+does **not** beat add-delete-swap at any ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}.
+The learned/ADS gap ratio grows modestly (0.33× → 0.42×) because
+quench-learned improves slightly while ADS is flat; it never crosses 1.
+The analytic surrogate collapses as ρ grows (Spearman 0.64 → 0.36,
+ground-state rank 46 → 444). Split-R̂ is clean for ADS and quench
+(R̂ ≤ 1.07); uniform at ρ=0.9 is 1.12.
+
+| ρ | ADS gap | quench-analytic | quench-learned | analytic / ADS | learned / ADS |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0.0710 | 0.0118 | 0.0231 | 0.17× | 0.33× |
+| 0.3 | 0.0696 | 0.0122 | 0.0226 | 0.18× | 0.32× |
+| 0.5 | 0.0695 | 0.0135 | 0.0233 | 0.19× | 0.34× |
+| 0.7 | 0.0694 | 0.0153 | 0.0244 | 0.22× | 0.35× |
+| 0.9 | 0.0694 | 0.0133 | 0.0294 | 0.19× | 0.42× |
+
+Gate: negative result, written up. Sampled p=20–27 is the remaining
+place the story could still turn.
+

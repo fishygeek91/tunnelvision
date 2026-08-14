@@ -27,6 +27,7 @@ EXACT_SIDE_PATHS = [
     REPO_ROOT / "src" / "tunnelvision" / "surrogate.py",
     REPO_ROOT / "src" / "tunnelvision" / "design.py",
     REPO_ROOT / "src" / "tunnelvision" / "bits.py",
+    REPO_ROOT / "src" / "tunnelvision" / "tempering.py",
     *sorted((REPO_ROOT / "src" / "tunnelvision" / "targets").glob("*.py")),
     *sorted((REPO_ROOT / "src" / "tunnelvision" / "data").glob("*.py")),
     REPO_ROOT / "tests" / "test_exactness.py",

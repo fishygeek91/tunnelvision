@@ -8,14 +8,15 @@ alwaysApply: true
 This repo implements quantum-enhanced MCMC for Bayesian variable selection.
 The entire scientific claim rests on ONE invariant:
 
-**Correctness lives only in the exact side (engine.py, targets/, diagnostics.py).
-Kernels and surrogates are allowed to be wrong; they may only affect speed.**
+**Correctness lives only in the exact side (engine.py, targets/, diagnostics.py,
+tempering.py). Kernels and surrogates are allowed to be wrong; they may only
+affect speed.**
 
 Concretely:
 - Never let a kernel read target log-probabilities. Kernels propose from state + fixed data (surrogate (h, J)) only.
 - Never let surrogate.py outputs reach accept/reject. Accept/reject uses targets/* exact log_prob exclusively.
 - Surrogate quality may only ever affect SPEED. If changing the surrogate changes posterior estimates beyond Monte Carlo error, something crossed the wall — treat as a P0 bug.
-- Never import qiskit (or anything quantum) in engine.py, targets/, diagnostics.py, surrogate.py, design.py, data/, or tests/test_exactness.py. The exact side runs on numpy/scipy alone.
+- Never import qiskit (or anything quantum) in engine.py, targets/, diagnostics.py, surrogate.py, design.py, data/, tempering.py, or tests/test_exactness.py. The exact side runs on numpy/scipy alone.
 - Kernels return (y, log_q_forward, log_q_reverse). Symmetric kernels return 0.0, 0.0. If you're unsure a kernel is symmetric, it isn't — compute the log-q terms.
 - AddDeleteSwap is asymmetric at boundary states (empty/full models). Do not "simplify" it to symmetric.
 - Every stochastic function takes an explicit numpy Generator or seed. No global random state, no np.random.* module calls.

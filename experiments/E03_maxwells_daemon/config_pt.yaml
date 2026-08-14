@@ -1,9 +1,9 @@
-# E03 — Maxwell's Daemon, phase 1 (simulator, exact tier).
-# Question: does a fixed noise ladder mix faster than its best
-# single rung, and does noise heat the proposal? Parallel tempering
-# is the third arm (config_pt.yaml / run_pt.py).
+# E03 — parallel tempering vs rung vs ladder (exact tier).
+# Third arm of Maxwell's Daemon: classical replica exchange on the
+# exact g-prior, plus the Aer-realistic hot rung (λ̂ ≈ 0.65).
 prior_inclusion: 0.5
-noise_levels: [0.0, 0.001, 0.005, 0.02, 0.1]
+ladder_levels: [0.0, 0.001, 0.005, 0.02, 0.1]
+hot_lambda: 0.65
 datasets:
   - name: diabetes
   - name: synthetic
@@ -29,7 +29,8 @@ chain:
   n_steps: 4000
   burn_in: 500
   seed: 0
-temperature:
-  n_samples: 4000
+pt:
+  n_replicas: 5
+  beta_min: 0.2
   seed: 0
-output_dir: results/E03
+output_dir: results/E03/pt

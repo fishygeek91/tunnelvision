@@ -1,0 +1,49 @@
+# E02c — sampled tier. p > 14, so there is no transition matrix and no
+# spectral gap. The scoreboard is ESS/step, ESS/sec, and split-R̂.
+# Quench at 2^20 is a wall-clock decision; 2^27 is refused by the dense
+# energy construction (see run_sampled.py). Matching SNR / k_true / n
+# to the E02b ρ-sweep so the only thing that changes is p.
+ps: [20, 27]
+rhos: [0.5, 0.9]
+prior_inclusion: 0.5
+kernels:
+  - add-delete-swap
+  - single-flip
+  - quench-learned
+# Analytic surrogate already collapses at high ρ on the exact tier.
+# Keep it as a p=20 footnote, not a p=27 attempt.
+include_quench_analytic_at_p20: true
+synthetic:
+  n: 120
+  k_true: 3
+  snr: 2.0
+  seed: 0
+  structure: equicorrelated
+quench:
+  evolution: trotter
+  backend: statevector
+  n_gamma: 4
+  n_t: 4
+  gamma_range: [0.25, 0.6]
+  t_range: [2.0, 20.0]
+  trotter_dt: 0.8
+learned:
+  n_samples: 4000
+  seed: 0
+  ridge: 0.001
+diagnosis:
+  n_samples: 4000
+  seed: 1
+chain:
+  n_chains: 4
+  seed: 0
+  classical:
+    n_steps: 6000
+    burn_in: 1500
+  quench:
+    n_steps: 800
+    burn_in: 200
+pilot:
+  n_proposals: 6
+  max_quench_wall_seconds: 2400
+output_dir: results/E02/sampled

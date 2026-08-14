@@ -153,6 +153,7 @@ def _quench(surrogate: IsingSurrogate, name: str, cfg: dict[str, Any]) -> Quench
         gamma_range=tuple(cfg["gamma_range"]),
         t_range=tuple(cfg["t_range"]),
         trotter_dt=float(cfg.get("trotter_dt", 0.8)),
+        backend=str(cfg.get("backend", "statevector")),
         evolution=str(cfg.get("evolution", "exact")),
         n_gamma=int(cfg["n_gamma"]),
         n_t=int(cfg["n_t"]),

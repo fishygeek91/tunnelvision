@@ -106,6 +106,20 @@ def test_aer_noiseless_tracks_trotter_q() -> None:
     np.testing.assert_allclose(fit_global_depolarize(q_sv, q_aer), 0.0, atol=1e-8)
 
 
+def test_aer_noiseless_tracks_trotter_q_with_fields() -> None:
+    """Surrogates have h ≠ 0; h = 0 glasses cannot catch a Z-vs-s sign flip."""
+    target = random_spin_glass(
+        3, topology="all-to-all", seed=2, temperature=1.0, random_fields=True
+    )
+    inner = QuenchKernel(
+        target.h, target.J, n_gamma=2, n_t=2, evolution="trotter", backend="statevector"
+    )
+    q_sv = inner.proposal_matrix(3)
+    q_aer = aer_noisy_proposal_matrix(inner, 0.0, n_gamma=2, n_t=2)
+    np.testing.assert_allclose(q_aer, q_sv, atol=1e-8, rtol=0.0)
+    np.testing.assert_allclose(fit_global_depolarize(q_sv, q_aer), 0.0, atol=1e-8)
+
+
 def test_aer_noise_increases_effective_lambda() -> None:
     inner = _small_quench(n=3, seed=3, evolution="trotter", n_gamma=2, n_t=2)
     q_sv = inner.proposal_matrix(3)

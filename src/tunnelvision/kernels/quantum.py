@@ -403,18 +403,25 @@ class QuenchKernel(Kernel):
             circuit.rx(angle, qubit)
 
     def _append_problem(self, circuit: Any, phi: float) -> None:
-        """e^{−i φ H_prob} as RZ / RZZ. See module docstring for angles.
+        """e^{−i φ H_prob} as RZ / RZZ.
 
-        E = −Σ_{i<j} J_ij Z_i Z_j − Σ_i h_i Z_i, so e^{−i φ E}
-        = e^{i (φ J) ZZ} e^{i (φ h) Z}. RZ(λ) = e^{−i λ Z/2} ⇒
-        e^{i ψ Z} = RZ(−2ψ); likewise RZZ(−2φ) for the couplings.
+        Numpy energies use s = 2x−1, so computational |0⟩ is s = −1.
+        Qiskit has Z|0⟩ = +|0⟩, therefore s = −Z and s_i s_j = Z_i Z_j.
+        The field term flips; the couplings do not:
+
+            E = −Σ_{i<j} J_ij Z_i Z_j + Σ_i h_i Z_i
+
+        Then e^{−i φ E} = e^{i (φ J) ZZ} e^{−i (φ h) Z}. RZ(λ) = e^{−i λ Z/2}
+        ⇒ e^{−i ψ Z} = RZ(2ψ); RZZ(−2 φ J) for the couplings. Tests with
+        h = 0 cannot catch a field-sign error — the surrogate (and any
+        Layden instance with random_fields=True) can.
         """
         if phi == 0.0:
             return
         for i in range(self.n_vars):
             field = phi * self.h[i]
             if field != 0.0:
-                circuit.rz(-2.0 * field, i)
+                circuit.rz(2.0 * field, i)
         for i in range(self.n_vars):
             for j in range(i + 1, self.n_vars):
                 coupling = phi * self.J[i, j]

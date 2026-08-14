@@ -183,13 +183,20 @@ def test_quench_sampled_distribution_matches_enumeration() -> None:
     assert tv < 0.12, f"quench TV distance {tv:.4f} exceeded tolerance"
 
 
-def test_qiskit_trotter_circuit_matches_numpy() -> None:
-    """Aer/Qiskit must implement the same palindrome as apply_symmetric_trotter."""
+@pytest.mark.parametrize("random_fields", [False, True])
+def test_qiskit_trotter_circuit_matches_numpy(random_fields: bool) -> None:
+    """Aer/Qiskit must implement the same palindrome as apply_symmetric_trotter.
+
+    h = 0 is the easy case (ZZ is even under s → −Z). Nonzero fields
+    are the sign trap: bits.py has s = 2x−1, Qiskit has Z|0⟩ = +1.
+    """
     from qiskit.quantum_info import Operator
 
     from tunnelvision.kernels.quench import evolve_basis
 
-    target = _small_glass(3, seed=1)
+    target = random_spin_glass(
+        3, topology="all-to-all", seed=1, temperature=1.0, random_fields=random_fields
+    )
     kernel = _quench(target, evolution="trotter")
     gamma, t = 0.4, 2.4
     numpy_U = evolve_basis(

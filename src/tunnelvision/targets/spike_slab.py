@@ -23,6 +23,7 @@ import numpy as np
 from scipy.linalg import solve_triangular
 
 from tunnelvision.bits import all_binary_states, as_binary_vector
+from tunnelvision.design import center_and_scale
 from tunnelvision.targets.base import Target
 
 
@@ -36,32 +37,14 @@ class SpikeSlabTarget(Target):
         g: float | None = None,
         prior_inclusion: float = 0.5,
     ) -> None:
-        X_arr = np.asarray(X, dtype=np.float64)
-        y_arr = np.asarray(y, dtype=np.float64)
-        if X_arr.ndim != 2:
-            raise ValueError("X must be a 2-d array of shape (n_obs, n_vars)")
-        if y_arr.ndim != 1 or y_arr.shape[0] != X_arr.shape[0]:
-            raise ValueError("y must be 1-d with length X.shape[0]")
-        n_obs, n_vars = int(X_arr.shape[0]), int(X_arr.shape[1])
-        if n_obs < 2:
-            raise ValueError("need at least 2 observations to center the design")
+        X_c, y_c = center_and_scale(X, y)
+        n_obs, n_vars = int(X_c.shape[0]), int(X_c.shape[1])
         if not (0.0 < prior_inclusion < 1.0):
             raise ValueError(f"prior_inclusion must be in (0, 1), got {prior_inclusion}")
 
         g_val = float(n_obs) if g is None else float(g)
         if g_val <= 0.0:
             raise ValueError(f"g-prior scale must be positive, got {g_val}")
-
-        # Center-and-scale once. The intercept is absorbed by centering
-        # (standard BAS convention); column scaling is purely numerical.
-        X_c = X_arr - X_arr.mean(axis=0)
-        y_c = y_arr - y_arr.mean()
-        x_scale = X_c.std(axis=0, ddof=0)
-        x_scale = np.where(x_scale == 0.0, 1.0, x_scale)
-        X_c = X_c / x_scale
-        y_scale = float(y_c.std(ddof=0))
-        if y_scale > 0.0:
-            y_c = y_c / y_scale
 
         self.n_obs = n_obs
         self.n_vars = n_vars

@@ -1,4 +1,4 @@
-.PHONY: install test lint fmt e01 e02 e02-rho e02-ablations e03
+.PHONY: install test lint fmt e01 e02 e02-rho e02-ablations e03 e03-pt
 
 install:
 	uv sync --all-extras
@@ -26,3 +26,6 @@ e02-ablations:
 
 e03:
 	uv run python -m experiments.E03_maxwells_daemon.run
+
+e03-pt:
+	uv run python -m experiments.E03_maxwells_daemon.run_pt

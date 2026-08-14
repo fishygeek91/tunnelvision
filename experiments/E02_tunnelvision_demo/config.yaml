@@ -1,0 +1,36 @@
+# E02a — exact tier. Spectral gap is the headline; ESS/step and ESS/sec
+# exist so the quench's simulation cost cannot hide behind a bigger gap.
+# Full diabetes (p=10) is the paper figure. --quick swaps in a p=5
+# synthetic so the entry point is smoke-testable in seconds.
+dataset: diabetes
+prior_inclusion: 0.5
+kernels:
+  - uniform
+  - single-flip
+  - add-delete-swap
+  - quench-analytic
+  - quench-learned
+synthetic:
+  n: 120
+  p: 10
+  rho: 0.5
+  k_true: 3
+  snr: 2.0
+  seed: 0
+  structure: equicorrelated
+quench:
+  evolution: exact
+  n_gamma: 4
+  n_t: 4
+  gamma_range: [0.25, 0.6]
+  t_range: [2.0, 20.0]
+  trotter_dt: 0.8
+learned:
+  n_samples: 2000
+  seed: 0
+  ridge: 0.001
+chain:
+  n_steps: 4000
+  burn_in: 500
+  seed: 0
+output_dir: results/E02

@@ -139,25 +139,26 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 - [x] `data/loaders.py`: diabetes (sklearn, p=10, standardized) and
       `correlated_synthetic()` (equicorrelated or AR(1) design, tunable ρ,
       sparse true support, fixed SNR).
-- [ ] E02a: exact tier at p=10 — spectral gap for all five kernels
+- [x] E02a: exact tier at p=10 — spectral gap for all five kernels
       (uniform, single-flip, ADS, quench-analytic, quench-learned), PIP
       accuracy vs. enumeration, ESS/step and ESS/wall-clock-sec.
-      Scaffold is in (`experiments/E02_tunnelvision_demo/run.py --quick`
-      smoke-runs a p=5 synthetic). Full diabetes figure is the next session.
+      Full diabetes figure is in `results/E02/summary.md`.
       ⚠️ Report per-step AND per-second: the quench kernel pays a large
       constant factor in simulation; hiding that is the quantum-papers
       failure mode we built this repo to avoid.
-- [ ] E02b: ρ-sweep, ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}, p=10 exact + p∈{20,27}
-      sampled. **The story curve: does quantum advantage grow with ρ?**
+- [x] E02b: ρ-sweep, ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}, p=10 exact.
+      Sampled p∈{20,27} is deferred (quench at 2^20 is a wall-clock
+      decision). Story curve in `results/E02/rho_sweep/summary.md`.
       ⚠️ At high ρ, chains stick badly — use R̂ across ≥4 independent
       chains and long burn-in for the sampled tier; a stuck chain that
       looks converged is the subtlest way this experiment lies to you.
 - [ ] Ablations (P2, parallelizable): Aer depolarizing noise sweep — does
       the gap advantage survive realistic noise? Surrogate-quality sweep —
       corrupt (h, J) with increasing noise, find where advantage dies.
-- [ ] `results/E02/summary.md`. **Gate: quench beats ADS somewhere honest,
-      with the advantage growing in ρ — or we write up the negative result
-      with equal care (it's still a paper).**
+- [x] `results/E02/summary.md`. **Gate: negative at p=10 exact tier.**
+      Quench never beats ADS; learned/ADS ratio grows 0.33× → 0.42×
+      with ρ but does not cross 1. Written up in
+      `results/E02/rho_sweep/summary.md`. Sampled p=20–27 still open.
 
 ---
 

@@ -147,8 +147,7 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       constant factor in simulation; hiding that is the quantum-papers
       failure mode we built this repo to avoid.
 - [x] E02b: ρ-sweep, ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}, p=10 exact.
-      Sampled p∈{20,27} is deferred (quench at 2^20 is a wall-clock
-      decision). Story curve in `results/E02/rho_sweep/summary.md`.
+      Story curve in `results/E02/rho_sweep/summary.md`.
       ⚠️ At high ρ, chains stick badly — use R̂ across ≥4 independent
       chains and long burn-in for the sampled tier; a stuck chain that
       looks converged is the subtlest way this experiment lies to you.
@@ -158,10 +157,18 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       already-losing gap ratio; per-gate p = 0.005 already maps to
       λ̂ ≈ 0.65. Wrecking the learned surrogate kills the gap and
       leaves PIP error at Monte Carlo (wall holds).
-- [x] `results/E02/summary.md`. **Gate: negative at p=10 exact tier.**
-      Quench never beats ADS; learned/ADS ratio grows 0.33× → 0.42×
-      with ρ but does not cross 1. Written up in
-      `results/E02/rho_sweep/summary.md`. Sampled p=20–27 still open.
+- [x] E02c: sampled tier, p ∈ {20, 27}, ρ ∈ {0.5, 0.9}. Live
+      Trotter quench at p=20 is 2–3 s/propose and unconverged
+      (R̂ 1.45–1.74, PIP error 0.24–0.50). ADS mixes in ~1 s.
+      p=27 quench is a construction refusal (`problem_energies`
+      enumerates 2^p). Write-up in `results/E02/sampled/summary.md`.
+- [x] `results/E02/summary.md`. **Gate: negative at p=10 exact
+      tier, and the sampled tier does not turn it.** Quench never
+      beats ADS; learned/ADS gap ratio grows 0.33× → 0.42× with ρ
+      but does not cross 1. At p=20 the quench pays seconds per
+      proposal and does not mix. Written up in
+      `results/E02/rho_sweep/summary.md` and
+      `results/E02/sampled/summary.md`.
 
 ---
 

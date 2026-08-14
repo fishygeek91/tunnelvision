@@ -104,5 +104,5 @@ curve does not license a quantum-advantage claim.
 ## Notes
 
 - Add-delete-swap is the baseline. Beating uniform proves nothing.
-- Sampled tier at p=20–27 is not in this run.
+- Sampled tier at p=20–27 is in `results/E02/sampled/summary.md`.
 

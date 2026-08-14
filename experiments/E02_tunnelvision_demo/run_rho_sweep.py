@@ -26,6 +26,7 @@ from typing import Any
 
 import numpy as np
 
+from experiments.E02_tunnelvision_demo.chains import rho_chain_seed, run_replicated_chains
 from experiments.E02_tunnelvision_demo.run import (
     _KERNEL_COLORS,
     TabulatedKernel,
@@ -37,7 +38,7 @@ from experiments.provenance import REPO_ROOT, git_commit, load_yaml, package_ver
 
 os.environ.setdefault("MPLCONFIGDIR", str(REPO_ROOT / ".mplconfig"))
 from tunnelvision.data.loaders import correlated_synthetic
-from tunnelvision.diagnostics import ess, pip_error, rhat, spectral_gap
+from tunnelvision.diagnostics import spectral_gap
 from tunnelvision.engine import MetropolisEngine
 from tunnelvision.surrogate import (
     diagnose_surrogate,
@@ -63,11 +64,6 @@ def _apply_quick(config: dict[str, Any]) -> None:
     config["output_dir"] = "results/E02_quick/rho_sweep"
 
 
-def _chain_seed(base: int, rho: float, chain_index: int) -> int:
-    # Integer ρ-blocks so adding a correlation does not reshuffle the others.
-    return int(base) + 10_000 * int(round(float(rho) * 100.0)) + int(chain_index)
-
-
 def _score_kernel_multi(
     target: SpikeSlabTarget,
     kernel: Any,
@@ -87,60 +83,21 @@ def _score_kernel_multi(
     n_steps = int(chain_cfg["n_steps"])
     burn_in = int(chain_cfg["burn_in"])
     n_chains = int(chain_cfg["n_chains"])
-    if burn_in >= n_steps:
-        raise ValueError(f"burn_in ({burn_in}) must be < n_steps ({n_steps})")
-    if n_chains < 2:
-        raise ValueError(f"n_chains must be at least 2 for R̂, got {n_chains}")
-
-    x0 = np.zeros(target.n_vars, dtype=np.uint8)
-    size_series: list[np.ndarray] = []
-    pip_errors: list[float] = []
-    accepts: list[float] = []
-    ess_size_vals: list[float] = []
-    ess_pip_vals: list[float] = []
-    elapsed_vals: list[float] = []
-    n_kept = n_steps - burn_in
-
-    for chain_index in range(n_chains):
-        seed = _chain_seed(int(chain_cfg["seed"]), rho, chain_index)
-        t0 = time.perf_counter()
-        result = chain_engine.run(n_steps=n_steps, x0=x0, seed=seed)
-        elapsed = time.perf_counter() - t0
-        kept = result.states[burn_in:]
-        size = kept.sum(axis=1).astype(np.float64)
-        size_series.append(size)
-        ess_size = float(ess(size))
-        pip_ess = [float(ess(kept[:, j].astype(np.float64))) for j in range(target.n_vars)]
-        ess_size_vals.append(ess_size)
-        ess_pip_vals.append(float(np.mean(pip_ess)))
-        pip_errors.append(float(pip_error(kept, exact_pips)))
-        accepts.append(float(result.acceptance_rate))
-        elapsed_vals.append(elapsed)
-
-    sizes = np.stack(size_series, axis=0)
-    total_ess = float(np.sum(ess_size_vals))
-    total_time = float(np.sum(elapsed_vals))
+    seeds = [rho_chain_seed(int(chain_cfg["seed"]), rho, index) for index in range(n_chains)]
+    scored = run_replicated_chains(
+        chain_engine,
+        n_steps=n_steps,
+        burn_in=burn_in,
+        seeds=seeds,
+        x0=np.zeros(target.n_vars, dtype=np.uint8),
+        exact_pips=exact_pips,
+    )
     return {
         "rho": rho,
         "kernel": kernel.name,
         "spectral_gap": gap,
-        "acceptance_rate": float(np.mean(accepts)),
-        "pip_error": float(np.mean(pip_errors)),
-        "ess_size": float(np.mean(ess_size_vals)),
-        "ess_size_per_step": float(np.mean(ess_size_vals)) / float(n_kept),
-        "ess_size_per_sec": total_ess / total_time if total_time > 0.0 else float("inf"),
-        "ess_pip_mean": float(np.mean(ess_pip_vals)),
-        "ess_pip_per_step": float(np.mean(ess_pip_vals)) / float(n_kept),
-        "ess_pip_per_sec": (
-            float(np.sum(ess_pip_vals)) / total_time if total_time > 0.0 else float("inf")
-        ),
-        "rhat_size": float(rhat(sizes)),
         "gap_seconds": gap_seconds,
-        "wall_seconds": total_time,
-        "n_steps": n_steps,
-        "burn_in": burn_in,
-        "n_chains": n_chains,
-        "n_kept": n_kept,
+        **scored,
     }
 
 

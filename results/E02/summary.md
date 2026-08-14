@@ -61,7 +61,7 @@ grows with ρ. PIP error after a few thousand draws is Monte Carlo
 
 - Add-delete-swap is the baseline that matters. Beating uniform proves nothing.
 - Headline comparison is the exact gap. ESS/sec here is tabulated-Q, not QPU time.
-- E02b (ρ-sweep, sampled tier at p=20–27) is not in this run.
+- E02b (ρ-sweep) and E02c (sampled p=20–27) are separate runs.
 
 ## E02b — ρ-sweep (exact tier)
 
@@ -83,8 +83,9 @@ ground-state rank 46 → 444). Split-R̂ is clean for ADS and quench
 | 0.7 | 0.0694 | 0.0153 | 0.0244 | 0.22× | 0.35× |
 | 0.9 | 0.0694 | 0.0133 | 0.0294 | 0.19× | 0.42× |
 
-Gate: negative result, written up. Sampled p=20–27 is the remaining
-place the story could still turn.
+Gate: negative result, written up. Sampled p=20–27 is in
+[`sampled/summary.md`](sampled/summary.md) and does not turn
+the story.
 
 ## Ablations
 
@@ -97,4 +98,16 @@ p = 0.005 already maps to λ̂ ≈ 0.65, so the exact-tier slice
 is colder than realistic Aer noise. Wrecking the learned
 surrogate (Spearman 0.99 → 0.3) kills the gap and leaves PIP
 error at Monte Carlo — the wall holds.
+
+## E02c — sampled tier (p=20 and p=27)
+
+Full write-up: [`sampled/summary.md`](sampled/summary.md).
+
+Live Trotter quench at p=20 costs 2.0–2.8 s/propose. Four
+chains of 160 steps do not mix (R̂ 1.45–1.74, PIP error
+0.24–0.50 vs enumeration). ADS finishes in ~1 s with R̂ ≈ 1.00
+and PIP error 0.02–0.03. ESS/sec is 0.02 vs 380–430. p=27
+quench cannot be constructed: the problem Hamiltonian still
+enumerates 2^p. The story does not turn. The remaining
+scale-up path is WP7 coarse-graining, not a denser statevector.
 

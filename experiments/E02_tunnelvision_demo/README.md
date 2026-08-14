@@ -14,7 +14,11 @@ wall-clock cannot pose as a win.
 **E02b (ρ-sweep, exact tier):** p = 10, predictor correlation
 ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}. Hypothesis: quantum advantage grows with ρ.
 Four independent chains and split-R̂ catch stuck modes at high ρ.
-Sampled p = 20–27 is a later session.
+
+**E02c (sampled tier):** p ∈ {20, 27}, ρ ∈ {0.5, 0.9}. No transition
+matrix. Scoreboard is ESS/step, ESS/sec, and split-R̂. Quench is the
+live Trotter statevector; p=27 quench is a construction refusal
+(`problem_energies` enumerates 2^p).
 
 **Ablations (exact tier):** depolarizing-noise sweep (global λ, Aer
 check at p=6) and learned-surrogate corruption sweep. Question: where
@@ -28,11 +32,15 @@ uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep    # ρ-sweep p
 uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep --quick
 uv run python -m experiments.E02_tunnelvision_demo.run_ablations    # noise + surrogate sweeps
 uv run python -m experiments.E02_tunnelvision_demo.run_ablations --quick
+uv run python -m experiments.E02_tunnelvision_demo.run_sampled --pilot
+uv run python -m experiments.E02_tunnelvision_demo.run_sampled      # p=20/27 sampled tier
+uv run python -m experiments.E02_tunnelvision_demo.run_sampled --quick
 ```
 
 Writes `results/E02/summary.md` (tracked on a full run), plus gitignored
 `scoreboard.csv`, `scoreboard.png`, `meta.json`, and the two
 surrogate-vs-logp scatter plots. The ρ-sweep writes
 `results/E02/rho_sweep/summary.md` and `gap_vs_rho.png`. Ablations write
-`results/E02/ablations/summary.md`. `--quick` writes to
+`results/E02/ablations/summary.md`. The sampled tier writes
+`results/E02/sampled/summary.md`. `--quick` writes to
 `results/E02_quick/` and is not the gate.

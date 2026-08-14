@@ -155,9 +155,10 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 - [ ] Ablations (P2, parallelizable): Aer depolarizing noise sweep — does
       the gap advantage survive realistic noise? Surrogate-quality sweep —
       corrupt (h, J) with increasing noise, find where advantage dies.
-- [ ] `results/E02/summary.md`. **Gate: quench beats ADS somewhere honest,
-      with the advantage growing in ρ — or we write up the negative result
-      with equal care (it's still a paper).**
+- [x] `results/E02/summary.md`. **Gate: negative at p=10 exact tier.**
+      Quench never beats ADS; learned/ADS ratio grows 0.33× → 0.42×
+      with ρ but does not cross 1. Written up in
+      `results/E02/rho_sweep/summary.md`. Sampled p=20–27 still open.
 
 ---
 

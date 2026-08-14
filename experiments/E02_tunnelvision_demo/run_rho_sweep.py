@@ -227,8 +227,8 @@ def _story_read(rows: list[dict[str, Any]]) -> list[str]:
             continue
         ratios = [gaps[rho] / ads[rho] if ads[rho] > 0.0 else float("inf") for rho in rhos]
         low, high = ratios[0], ratios[-1]
-        grew = high > low * 1.05
-        shrink = high < low * 0.95
+        grew = high > low * 1.25
+        shrink = high < low * 0.80
         trend = "grows" if grew else ("shrinks" if shrink else "is roughly flat")
         beats = sum(1 for ratio in ratios if ratio > 1.05)
         lines.append(

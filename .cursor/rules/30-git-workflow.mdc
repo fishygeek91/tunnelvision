@@ -1,0 +1,32 @@
+---
+description: Branch, commit, and PR workflow — never land science on main directly
+alwaysApply: true
+---
+
+# Git workflow
+
+- Never commit to `main`. Branch from up-to-date `main` as `wp5-surrogate`,
+  `e02-loaders`, `fix-ads-logq` — roadmap id or bug, not `fix` / `temp` / `ai`.
+- One concern per branch. Open the PR with `gh pr create` (base `main`, or the
+  parent branch if stacked). Do not push commits to `main`.
+- Commits are small and focused. The message says *why* (scientific or
+  architectural reason), not "wip" or a file list.
+- Before `git push`: `uv run ruff check .` and `uv run pytest` (or `make lint`
+  / `make test`). A red `tests/test_exactness.py` is a stop, not a tolerance
+  change.
+- Results commits record git hash + full config + seed in the output directory
+  (see experiment rule 10). Commit `uv.lock` in the same PR if dependencies
+  changed — it is part of the reproducibility record.
+- PR body: what changed, which roadmap item, how it was tested. Merge via
+  `gh pr merge` only after the exactness suite is green.
+
+```
+# ❌ BAD — science on main, unverified
+git checkout main && git commit -am "stuff" && git push
+
+# ✅ GOOD
+git checkout -b wp5-surrogate
+# ... focused commits, make test, make lint ...
+git push -u origin HEAD
+gh pr create --base main --title "WP5: Ising surrogate" --body "..."
+```

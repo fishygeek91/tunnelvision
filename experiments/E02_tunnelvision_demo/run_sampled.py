@@ -255,9 +255,16 @@ def _story_read(
             sec_verb = (
                 "beats" if sec_ratio > 1.05 else ("matches" if sec_ratio > 0.95 else "loses to")
             )
+            rhat = float(match["rhat_size"])
+            caveat = (
+                f" R̂={rhat:.2f} — do not treat ESS as converged."
+                if rhat > 1.1
+                else ""
+            )
             lines.append(
                 f"- p={p}, ρ={rho:g}: `{name}` {step_verb} ADS on ESS/step "
-                f"({step_ratio:.2f}×) and {sec_verb} ADS on ESS/sec ({sec_ratio:.2f}×)."
+                f"({step_ratio:.2f}×) and {sec_verb} ADS on ESS/sec "
+                f"({sec_ratio:.2f}×).{caveat}"
             )
     stuck = [row for row in rows if float(row["rhat_size"]) > 1.1]
     if stuck:

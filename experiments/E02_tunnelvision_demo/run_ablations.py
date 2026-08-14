@@ -361,11 +361,19 @@ def _read_noise(rows: list[dict[str, Any]]) -> list[str]:
             last = subset[-1]
             r0 = float(first["spectral_gap"]) / ads_gap if ads_gap > 0.0 else float("inf")
             r1 = float(last["spectral_gap"]) / ads_gap if ads_gap > 0.0 else float("inf")
-            lines.append(
-                f"- `{family}` / ADS is {r0:.2f}× at λ={float(first['lambda']):g} "
-                f"and {r1:.2f}× at λ={float(last['lambda']):g}."
-            )
+        lines.append(
+            f"- `{family}` / ADS is {r0:.2f}× at λ={float(first['lambda']):g} "
+            f"and {r1:.2f}× at λ={float(last['lambda']):g}."
+        )
         lines.append("")
+    lines.extend(
+        [
+            "λ ≤ 0.1 barely moves the ratio. The Aer panel is the one that",
+            "says whether this slice is physically relevant: a long Trotter",
+            "circuit can map a small per-gate p onto a much larger λ̂.",
+            "",
+        ]
+    )
     return lines
 
 

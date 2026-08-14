@@ -152,9 +152,12 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       ⚠️ At high ρ, chains stick badly — use R̂ across ≥4 independent
       chains and long burn-in for the sampled tier; a stuck chain that
       looks converged is the subtlest way this experiment lies to you.
-- [ ] Ablations (P2, parallelizable): Aer depolarizing noise sweep — does
-      the gap advantage survive realistic noise? Surrogate-quality sweep —
-      corrupt (h, J) with increasing noise, find where advantage dies.
+- [x] Ablations (P2, parallelizable): Aer depolarizing noise sweep and
+      surrogate-quality sweep, exact tier. Write-up in
+      `results/E02/ablations/summary.md`. λ ≤ 0.1 barely moves the
+      already-losing gap ratio; per-gate p = 0.005 already maps to
+      λ̂ ≈ 0.65. Wrecking the learned surrogate kills the gap and
+      leaves PIP error at Monte Carlo (wall holds).
 - [x] `results/E02/summary.md`. **Gate: negative at p=10 exact tier.**
       Quench never beats ADS; learned/ADS ratio grows 0.33× → 0.42×
       with ρ but does not cross 1. Written up in

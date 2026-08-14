@@ -86,3 +86,15 @@ ground-state rank 46 → 444). Split-R̂ is clean for ADS and quench
 Gate: negative result, written up. Sampled p=20–27 is the remaining
 place the story could still turn.
 
+## Ablations
+
+Full write-up: [`ablations/summary.md`](ablations/summary.md).
+
+Depolarizing heat at λ ≤ 0.1 barely moves the already-losing
+quench/ADS gap ratio (learned 0.40× → 0.38× on diabetes;
+0.42× → 0.39× at ρ=0.9). A Trotter circuit with per-gate
+p = 0.005 already maps to λ̂ ≈ 0.65, so the exact-tier slice
+is colder than realistic Aer noise. Wrecking the learned
+surrogate (Spearman 0.99 → 0.3) kills the gap and leaves PIP
+error at Monte Carlo — the wall holds.
+

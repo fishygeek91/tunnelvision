@@ -17,7 +17,7 @@ See `docs/` for the research background (DEEPDIVE-01, NOVELTY-CHECK-01), archite
 src/tunnelvision/        the package
   engine.py              Metropolis–Hastings engine, kernel-agnostic (the exactness boundary)
   surrogate.py           2-local Ising surrogate construction from (X, y)
-  diagnostics.py         spectral gap (exact, n<=~14), ESS, autocorrelation, PIP error
+  diagnostics.py         spectral gap (exact, n<=~14), ESS, split-R̂, PIP error
   kernels/               proposal kernels: classical baselines + quantum quench + noise ladder
   targets/               target distributions: Ising Boltzmann, spike-and-slab posterior
   data/                  dataset loaders (diabetes p=10 first)
@@ -50,5 +50,5 @@ Rung 1 is in: MH engine, diagnostics, classical kernels, Ising +
 spike-and-slab targets, exactness invariants, `QuenchKernel` (exact /
 Trotter / Aer), and the E01 Layden reproduction (gate passed:
 k_quench ≈ 0.32 vs k_uniform ≈ 1.02 at T=0.1). WP5 (analytic + learned
-Ising surrogates) is in. E02a (diabetes p=10 exact-tier scoreboard) is
-the current Rung-2 gate; E02b (ρ-sweep) is next.
+Ising surrogates) is in. E02a (diabetes p=10 exact-tier scoreboard) and
+E02b (ρ-sweep, exact tier at p=10) are the current Rung-2 results.

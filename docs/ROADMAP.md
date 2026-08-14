@@ -146,8 +146,9 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       ⚠️ Report per-step AND per-second: the quench kernel pays a large
       constant factor in simulation; hiding that is the quantum-papers
       failure mode we built this repo to avoid.
-- [ ] E02b: ρ-sweep, ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}, p=10 exact + p∈{20,27}
-      sampled. **The story curve: does quantum advantage grow with ρ?**
+- [x] E02b: ρ-sweep, ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}, p=10 exact.
+      Sampled p∈{20,27} is deferred (quench at 2^20 is a wall-clock
+      decision). Story curve in `results/E02/rho_sweep/summary.md`.
       ⚠️ At high ρ, chains stick badly — use R̂ across ≥4 independent
       chains and long burn-in for the sampled tier; a stuck chain that
       looks converged is the subtlest way this experiment lies to you.

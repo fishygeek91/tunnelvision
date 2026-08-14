@@ -11,16 +11,20 @@ quench-analytic, quench-learned). One table: gap, ESS/step, ESS/sec.
 The per-second column exists so a bigger gap that costs 100× more
 wall-clock cannot pose as a win.
 
-**E02b (later):** p = 10 (exact) and p = 20–27 (sampled), predictor
-correlation ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}. Hypothesis: quantum advantage
-grows with ρ.
+**E02b (ρ-sweep, exact tier):** p = 10, predictor correlation
+ρ ∈ {0, 0.3, 0.5, 0.7, 0.9}. Hypothesis: quantum advantage grows with ρ.
+Four independent chains and split-R̂ catch stuck modes at high ρ.
+Sampled p = 20–27 is a later session.
 
 ```bash
-uv run python -m experiments.E02_tunnelvision_demo.run          # diabetes p=10
-uv run python -m experiments.E02_tunnelvision_demo.run --quick  # p=5 synthetic smoke
+uv run python -m experiments.E02_tunnelvision_demo.run              # diabetes p=10
+uv run python -m experiments.E02_tunnelvision_demo.run --quick      # p=5 synthetic smoke
+uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep    # ρ-sweep p=10
+uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep --quick
 ```
 
 Writes `results/E02/summary.md` (tracked on a full run), plus gitignored
 `scoreboard.csv`, `scoreboard.png`, `meta.json`, and the two
-surrogate-vs-logp scatter plots. `--quick` writes to `results/E02_quick/`
-and is not the gate.
+surrogate-vs-logp scatter plots. The ρ-sweep writes
+`results/E02/rho_sweep/summary.md` and `gap_vs_rho.png`. `--quick`
+writes to `results/E02_quick/` and is not the gate.

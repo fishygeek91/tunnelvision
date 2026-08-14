@@ -9,6 +9,7 @@ from tunnelvision.diagnostics import (
     ess,
     integrated_autocorrelation_time,
     pip_error,
+    rhat,
     spectral_gap,
 )
 from tunnelvision.engine import MetropolisEngine
@@ -72,6 +73,41 @@ def test_ess_iid() -> None:
     x = rng.standard_normal(4_000)
     n_eff = ess(x)
     assert 0.7 * x.size < n_eff <= x.size
+
+
+def test_rhat_iid_is_near_one() -> None:
+    rng = np.random.Generator(np.random.PCG64(3))
+    chains = rng.standard_normal((4, 4_000))
+    value = rhat(chains)
+    assert 0.99 < value < 1.05
+
+
+def test_rhat_stuck_modes_is_large() -> None:
+    """Four chains parked at two different constants — the high-ρ failure mode."""
+    chains = np.array(
+        [
+            np.full(200, 0.0),
+            np.full(200, 0.0),
+            np.full(200, 10.0),
+            np.full(200, 10.0),
+        ],
+        dtype=np.float64,
+    )
+    assert rhat(chains) > 5.0
+
+
+def test_rhat_identical_constants_is_one() -> None:
+    assert rhat(np.ones((3, 50))) == 1.0
+
+
+def test_rhat_rejects_too_few_chains() -> None:
+    with pytest.raises(ValueError, match="at least 2 chains"):
+        rhat(np.zeros((1, 20)))
+
+
+def test_rhat_rejects_short_chains() -> None:
+    with pytest.raises(ValueError, match="at least 4 draws"):
+        rhat(np.zeros((2, 3)))
 
 
 def test_pip_error_zero_when_empirical_matches() -> None:

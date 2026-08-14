@@ -7,6 +7,7 @@
                  │      EXACT SIDE (correctness lives here)   │
    data (X,y) ──▶│  targets/spike_slab.py   exact log p(γ|y)  │
                  │  engine.py               accept / reject   │
+                 │  tempering.py            replica exchange  │
                  │  diagnostics.py          the scoreboard    │
                  └───────────────▲────────────────────────────┘
                                  │ proposals (y, log q_fwd, log q_rev)

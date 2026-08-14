@@ -55,6 +55,29 @@ class MetropolisEngine:
         self.target = target
         self.kernel = kernel
 
+    def step(
+        self,
+        x: np.ndarray,
+        logp_x: float,
+        rng: np.random.Generator,
+    ) -> tuple[np.ndarray, float, bool]:
+        """One Metropolis–Hastings update. Parallel tempering reuses this.
+
+        The Hastings ratio lives only here. A tempered target is still a
+        Target: multiply log p by β outside, then call this with the
+        tempered value. Kernels never see either number.
+        """
+        n_vars = self.target.n_vars
+        current = as_binary_vector(x, n_vars)
+        proposal, log_q_fwd, log_q_rev = self.kernel.propose(current, rng)
+        y = as_binary_vector(proposal, n_vars)
+        logp_y = float(self.target.log_prob(y))
+        # MH log-accept: Δlogp + log q(x|y) − log q(y|x).
+        log_alpha = (logp_y - float(logp_x)) + float(log_q_rev) - float(log_q_fwd)
+        if log_alpha >= 0.0 or rng.random() < np.exp(log_alpha):
+            return y, logp_y, True
+        return current, float(logp_x), False
+
     def run(self, n_steps: int, x0: np.ndarray, seed: int = 0) -> ChainResult:
         if n_steps < 1:
             raise ValueError(f"n_steps must be at least 1, got {n_steps}")
@@ -68,20 +91,11 @@ class MetropolisEngine:
         accepted = np.empty(n_steps, dtype=bool)
 
         logp_x = float(self.target.log_prob(x))
-        for step in range(n_steps):
-            proposal, log_q_fwd, log_q_rev = self.kernel.propose(x, rng)
-            y = as_binary_vector(proposal, n_vars)
-            logp_y = float(self.target.log_prob(y))
-            # MH log-accept: Δlogp + log q(x|y) − log q(y|x).
-            log_alpha = (logp_y - logp_x) + float(log_q_rev) - float(log_q_fwd)
-            if log_alpha >= 0.0 or rng.random() < np.exp(log_alpha):
-                x = y
-                logp_x = logp_y
-                accepted[step] = True
-            else:
-                accepted[step] = False
-            states[step] = x
-            log_probs[step] = logp_x
+        for i in range(n_steps):
+            x, logp_x, took = self.step(x, logp_x, rng)
+            states[i] = x
+            log_probs[i] = logp_x
+            accepted[i] = took
 
         return ChainResult(
             states=states,

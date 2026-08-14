@@ -7,6 +7,7 @@ detail to implement from without re-reading PDFs. One file per paper.
 |------|-------|------|
 | layden2023_qemcmc.md | Nature 619, 282 (2023) | THE algorithm — implementation spec |
 | ferguson2025_coarse_graining.md | PRR 7, 013231 (2025) | scaling past qubit count |
+| citation_sweep.md | OpenAlex citers of W4384009058 | novelty audit before drafting |
 | (see docs/BACKGROUND.md) | remaining bibliography with roles | context/differentiation |
 
 PDFs are not committed (copyright + repo bloat). `./get_papers.sh` downloads

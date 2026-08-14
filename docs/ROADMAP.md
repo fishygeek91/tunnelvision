@@ -231,10 +231,12 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 
 ## Standing items (anyone, anytime)
 
-- [ ] **Citation-graph sweep** of arXiv:2203.12497 (Semantic Scholar,
-      ~100+ citers): grep titles/abstracts for Bayesian / posterior /
-      variable selection / noise / temperature. Owed before any novelty
-      claim in writing. (P1 before drafting, 🟢, ~2 hours.)
+- [x] **Citation-graph sweep** of arXiv:2203.12497 / Nature 619, 282
+      (OpenAlex W4384009058, 83 citers / 75 unique titles). No citer
+      does Bayesian variable selection. Must-cites: Orfi & Sels
+      (mixing barriers), Ferguson (coarse-graining), Christmann
+      (quantum-inspired proposals). Notes in
+      `docs/papers/citation_sweep.md`. (P1 before drafting.)
 - [ ] Keep `docs/papers/` notes updated when anyone reads a full PDF.
 - [ ] `uv.lock` committed and current; every result records commit + config
       + seed (cursor rule 10).

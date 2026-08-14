@@ -117,7 +117,7 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 
 ### WP5 — Surrogate (P1, 🟡) — parallelizable with WP4
 
-- [ ] `ising_surrogate_from_data()`: fields h_j from marginal correlations
+- [x] `ising_surrogate_from_data()`: fields h_j from marginal correlations
       |x_j'y| (scaled), antiferromagnetic couplings J_jk from collinearity
       (X'X off-diagonals), sparsity field from prior log-odds.
       ⚠️ **Scale is the whole game.** The quench dynamics care about the
@@ -128,9 +128,9 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       and surrogate-energy vs. exact-log-posterior over all 1024 models
       should correlate strongly (plot it — this one scatter plot is the
       cheapest possible de-risking of the entire project).
-- [ ] `learned_surrogate()`: ridge-fit (h, J) on exact log-posterior values
+- [x] `learned_surrogate()`: ridge-fit (h, J) on exact log-posterior values
       at random γ samples. 🟢 once the analytic one exists.
-- [ ] Remember (cursor rule): surrogate quality may only ever affect
+- [x] Remember (cursor rule): surrogate quality may only ever affect
       SPEED. If changing the surrogate changes posterior estimates beyond
       Monte Carlo error, something crossed the wall — treat as P0 bug.
 

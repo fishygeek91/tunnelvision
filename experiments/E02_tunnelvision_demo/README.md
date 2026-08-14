@@ -21,5 +21,6 @@ uv run python -m experiments.E02_tunnelvision_demo.run --quick  # p=5 synthetic 
 ```
 
 Writes `results/E02/summary.md` (tracked on a full run), plus gitignored
-`scoreboard.csv`, `meta.json`, and the two surrogate-vs-logp scatter plots.
-`--quick` writes to `results/E02_quick/` and is not the gate.
+`scoreboard.csv`, `scoreboard.png`, `meta.json`, and the two
+surrogate-vs-logp scatter plots. `--quick` writes to `results/E02_quick/`
+and is not the gate.

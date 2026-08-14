@@ -50,5 +50,5 @@ Rung 1 is in: MH engine, diagnostics, classical kernels, Ising +
 spike-and-slab targets, exactness invariants, `QuenchKernel` (exact /
 Trotter / Aer), and the E01 Layden reproduction (gate passed:
 k_quench ≈ 0.32 vs k_uniform ≈ 1.02 at T=0.1). WP5 (analytic + learned
-Ising surrogates) is in. E02 loaders and the exact-tier scaffold are
-runnable via `--quick`; the diabetes p=10 figure is next.
+Ising surrogates) is in. E02a (diabetes p=10 exact-tier scoreboard) is
+the current Rung-2 gate; E02b (ρ-sweep) is next.

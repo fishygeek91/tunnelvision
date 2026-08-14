@@ -10,9 +10,9 @@ kernels:
   - add-delete-swap
   - single-flip
   - quench-learned
-# Analytic surrogate already collapses at high ρ on the exact tier.
-# Keep it as a p=20 footnote, not a p=27 attempt.
-include_quench_analytic_at_p20: true
+# Analytic already collapses at high ρ on the exact tier (E02b). The
+# p=20 pilot is 3.3 s/propose; the wall-clock budget goes to learned.
+include_quench_analytic_at_p20: false
 synthetic:
   n: 120
   k_true: 3
@@ -41,9 +41,11 @@ chain:
     n_steps: 6000
     burn_in: 1500
   quench:
-    n_steps: 800
-    burn_in: 200
+    # Pilot 2026-08-14: 3.319 s/propose at p=20 Trotter statevector.
+    # 4 × 160 × 3.3s ≈ 35 min/cell; two ρ cells fit a session.
+    n_steps: 160
+    burn_in: 40
 pilot:
   n_proposals: 6
-  max_quench_wall_seconds: 2400
+  max_quench_wall_seconds: 2700
 output_dir: results/E02/sampled

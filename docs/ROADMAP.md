@@ -169,20 +169,25 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 
 ### E03 — noise as tempering (P1 after E02, 🔴)
 
-- [ ] `NoiseLadderKernel`: K quench kernels at fixed Aer depolarizing
-      levels p ∈ {0, 1e-3, 5e-3, 2e-2, 1e-1}, random-scan composition.
+- [x] `NoiseLadderKernel`: K quench kernels at fixed depolarizing
+      levels λ ∈ {0, 1e-3, 5e-3, 2e-2, 1e-1}, random-scan composition.
       ⚠️ **Fixed levels only.** A mixture of fixed symmetric kernels chosen
       independently of the current state is symmetric; choosing the rung
       *based on chain state or history* breaks that and needs either
       explicit log-q accounting or diminishing-adaptation theory. Start
       rigid; earn flexibility later.
-- [ ] The physics measurement: effective proposal temperature vs. noise
+- [x] The physics measurement: effective proposal temperature vs. noise
       strength (fit proposal energy-change distributions per rung). This
-      is the figure that names the paper.
+      is the figure that names the paper. T_eff rises with λ
+      (diabetes 1.86 → 2.28; ρ=0.9  1.70 → 2.04).
 - [ ] Compare: single best rung vs. ladder vs. classical parallel
       tempering, exact tier at p=10 + hardest ρ=0.9 instance.
-- [ ] `results/E03/summary.md` — all three outcomes (helps / hurts /
-      regime-dependent) are publishable; say which we got, honestly.
+      Rung-vs-ladder is in `results/E03/summary.md` (ladder matches
+      its best rung, loses to ADS). Parallel tempering is deferred.
+- [x] `results/E03/summary.md` — outcome at p=10 exact tier: **hurts /
+      no help**. Noise heats the proposal; the ladder does not beat
+      its coldest rung; nothing beats ADS. All three outcomes remain
+      open at hotter (Aer-realistic) λ and vs. parallel tempering.
 
 ### WP6 — Hardware (P2 until E02 gates, 🔴)
 

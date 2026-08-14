@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Quantum kernel rules
 
-- Quench proposals follow Layden et al. (arXiv:2203.12497): prepare |x⟩, evolve under alpha*H_prob + (1-alpha)*H_mix, measure. Randomize (alpha, t) per proposal within configured ranges.
+- Quench proposals follow Layden et al. (arXiv:2203.12497): prepare |x⟩, evolve under H(γ) = (1−γ)·α·H_prob + γ·H_mix, measure. α is the Frobenius ratio (Eq. 8). Randomize (γ, t) per proposal within configured ranges (default γ~U[0.25,0.6], t~U[2,20]).
 - Symmetry claim discipline: time-symmetric evolution + unital noise ⇒ symmetric proposal (log-q = 0). Amplitude damping breaks this. Any kernel run on real hardware or with a non-unital noise model must carry a comment acknowledging the approximation and E03's bias audit covers it.
 - Simulator first: every quantum kernel needs a statevector path (exact, n ≤ 14, enables proposal_matrix()) and a shots path (Aer, any n). Hardware path last.
 - Hardware credentials: environment variables / local qiskit-ibm.json only. Never in code, configs, or notebooks. The .gitignore already excludes them — do not weaken it.

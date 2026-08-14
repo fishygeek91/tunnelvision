@@ -19,10 +19,15 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
-# Experiment outputs: keep configs + summary markdown, ignore bulk artifacts
+# Experiment outputs: keep summary markdown, ignore bulk artifacts.
+# Directories must be re-included first: git never descends into an
+# excluded directory, so `!.../summary.md` alone can not re-include.
 results/**
+!results/**/
 !results/.gitkeep
 !results/**/summary.md
+# --quick smoke runs are not results; never track their summaries
+results/*_quick/
 experiments/**/out/
 
 # IBM Quantum / hardware credentials — NEVER commit
@@ -30,6 +35,12 @@ experiments/**/out/
 .env*
 qiskit-ibm.json
 **/ibm_token*
+
+# Paper PDFs (downloaded via docs/papers/get_papers.sh)
+docs/papers/pdf/
+
+# Matplotlib cache (created by headless experiment runs)
+.mplconfig/
 
 # OS / editor
 .DS_Store

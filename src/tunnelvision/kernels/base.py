@@ -25,8 +25,10 @@ class Kernel(ABC):
     name: str = "kernel"
 
     @abstractmethod
-    def propose(self, x: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, float, float]:
-        ...
+    def propose(
+        self, x: np.ndarray, rng: np.random.Generator
+    ) -> tuple[np.ndarray, float, float]: ...
 
     def proposal_matrix(self, n_vars: int) -> np.ndarray:
+        """Row ``x`` is q(·|x) over the bit-packed index convention in bits.py."""
         raise NotImplementedError(f"{self.name} has no exact proposal matrix")

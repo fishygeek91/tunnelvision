@@ -1,22 +1,22 @@
 .PHONY: install test lint fmt e01 e02 e03
 
 install:
-	pip install -e ".[dev]"
+	uv sync --all-extras
 
 test:
-	pytest
+	uv run pytest
 
 lint:
-	ruff check .
+	uv run ruff check .
 
 fmt:
-	ruff check --fix . && ruff format .
+	uv run ruff check --fix . && uv run ruff format .
 
 e01:
-	python -m experiments.E01_layden_repro.run
+	uv run python -m experiments.E01_layden_repro.run
 
 e02:
-	python -m experiments.E02_tunnelvision_demo.run
+	uv run python -m experiments.E02_tunnelvision_demo.run
 
 e03:
-	python -m experiments.E03_maxwells_daemon.run
+	uv run python -m experiments.E03_maxwells_daemon.run

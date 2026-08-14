@@ -30,10 +30,13 @@ results/                 experiment outputs (gitignored except summaries)
 ## Quickstart (once implemented)
 
 ```bash
-pip install -e ".[dev]"
-pytest                       # exactness invariants must pass before anything else
-python -m experiments.E01_layden_repro.run    # reproduce the Layden speedup curve
+uv sync --all-extras         # creates .venv and installs everything (uv.lock pins it)
+uv run pytest                # exactness invariants must pass before anything else
+uv run python -m experiments.E01_layden_repro.run   # reproduce the Layden speedup curve
 ```
+
+This is a [uv](https://docs.astral.sh/uv/)-managed project — commit `uv.lock`; it is the
+reproducibility record for every experiment. (`pip install -e ".[dev]"` still works if you must.)
 
 ## Ground rules
 
@@ -43,4 +46,8 @@ python -m experiments.E01_layden_repro.run    # reproduce the Layden speedup cur
 
 ## Status
 
-Scaffold. Implementation begins with `engine.py` + classical kernels + exact spectral-gap diagnostics (Rung 1 of the roadmap).
+Rung 1 is in: MH engine, diagnostics, classical kernels, Ising +
+spike-and-slab targets, exactness invariants, `QuenchKernel` (exact /
+Trotter / Aer), and the E01 Layden reproduction (gate passed:
+k_quench ≈ 0.32 vs k_uniform ≈ 1.02 at T=0.1). Next is WP5 (surrogate)
+and E02.

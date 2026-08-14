@@ -1,0 +1,23 @@
+# E01 — Layden et al., Nature 619, 282 (2023), Fig. 2 family.
+# Exact-tier spectral gaps. Quench uses dense expm (the paper's theoretical
+# curves), not Trotter — Trotter is the circuit we will run later, but the
+# Rung 1 gate is "do we reproduce the known k-exponents?"
+# n=5–10: the paper fits n=3–10. Fitting only n=8–10 is too short a
+# lever arm and overestimates k (0.62 instead of ~0.29).
+n: [5, 6, 7, 8, 9, 10]
+temperatures: [0.1, 0.3, 1.0]
+n_instances: 20
+instance_seed: 0
+topology: all-to-all
+random_fields: true
+kernels: [uniform, single-flip, quench]
+quench:
+  evolution: exact
+  n_gamma: 6
+  n_t: 8
+  gamma_range: [0.25, 0.6]
+  t_range: [2.0, 20.0]
+  trotter_dt: 0.8
+# 0 = min(cpu_count, n_instances)
+n_workers: 0
+output_dir: results/E01

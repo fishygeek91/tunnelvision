@@ -18,10 +18,9 @@ jobs:
         python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-      - run: pip install -e ".[dev]"
-      - run: ruff check .
-      - run: pytest --cov=tunnelvision --cov-report=term
+      - run: uv sync --all-extras
+      - run: uv run ruff check .
+      - run: uv run pytest --cov=tunnelvision --cov-report=term

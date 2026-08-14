@@ -8,6 +8,7 @@ alwaysApply: false
 
 - Every experiment is: run.py + config.yaml + README.md in experiments/EXX_name/. run.py must be runnable as `python -m experiments.EXX_name.run` from repo root on a clean checkout.
 - Every run records: git commit hash, full config, seed(s), package versions → written into its output directory. No result is real without them.
+- Environment is uv-managed: run everything through `uv run ...`; add dependencies with `uv add` (never bare pip install); uv.lock is committed and is part of the reproducibility record.
 - Outputs go to results/EXX/... (gitignored). Human-readable conclusions go to results/EXX/summary.md (tracked). Update summary.md in the same PR that produced the result.
 - Kernel comparisons at p or n ≤ 14 MUST use the exact tier (spectral gap via transition matrix), not sampled estimates. Sampled diagnostics (IAT/ESS/PIP error) are for larger sizes only.
 - Baselines: add-delete-swap is mandatory in every E02/E03 comparison. Beating uniform-flip proves nothing; never headline it.

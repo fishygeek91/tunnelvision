@@ -1,0 +1,15 @@
+---
+description: Rules for experiment code and results hygiene
+globs: ["experiments/**", "results/**"]
+alwaysApply: false
+---
+
+# Experiment rules
+
+- Every experiment is: run.py + config.yaml + README.md in experiments/EXX_name/. run.py must be runnable as `python -m experiments.EXX_name.run` from repo root on a clean checkout.
+- Every run records: git commit hash, full config, seed(s), package versions → written into its output directory. No result is real without them.
+- Outputs go to results/EXX/... (gitignored). Human-readable conclusions go to results/EXX/summary.md (tracked). Update summary.md in the same PR that produced the result.
+- Kernel comparisons at p or n ≤ 14 MUST use the exact tier (spectral gap via transition matrix), not sampled estimates. Sampled diagnostics (IAT/ESS/PIP error) are for larger sizes only.
+- Baselines: add-delete-swap is mandatory in every E02/E03 comparison. Beating uniform-flip proves nothing; never headline it.
+- Plot/report speedup per chain step AND per wall-clock/QPU-second. Quantum papers that hide wall clock are the failure mode we're avoiding.
+- Negative results get written up in summary.md with the same care as positive ones.

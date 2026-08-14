@@ -1,0 +1,14 @@
+---
+description: Rules for quantum kernel and hardware code
+globs: ["src/tunnelvision/kernels/**"]
+alwaysApply: false
+---
+
+# Quantum kernel rules
+
+- Quench proposals follow Layden et al. (arXiv:2203.12497): prepare |x⟩, evolve under alpha*H_prob + (1-alpha)*H_mix, measure. Randomize (alpha, t) per proposal within configured ranges.
+- Symmetry claim discipline: time-symmetric evolution + unital noise ⇒ symmetric proposal (log-q = 0). Amplitude damping breaks this. Any kernel run on real hardware or with a non-unital noise model must carry a comment acknowledging the approximation and E03's bias audit covers it.
+- Simulator first: every quantum kernel needs a statevector path (exact, n ≤ 14, enables proposal_matrix()) and a shots path (Aer, any n). Hardware path last.
+- Hardware credentials: environment variables / local qiskit-ibm.json only. Never in code, configs, or notebooks. The .gitignore already excludes them — do not weaken it.
+- Batch hardware proposals: pre-sample proposal pools per job keyed by chain state; never one QPU job per chain step.
+- Trotterization: default 20 steps; any change must note the effect on proposal symmetry (Trotterized evolution with symmetric ordering keeps time-symmetry; asymmetric orderings do not).

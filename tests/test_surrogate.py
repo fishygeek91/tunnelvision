@@ -19,6 +19,7 @@ from tunnelvision.engine import MetropolisEngine
 from tunnelvision.kernels.base import Kernel
 from tunnelvision.surrogate import (
     IsingSurrogate,
+    corrupt_surrogate,
     diagnose_surrogate,
     ising_surrogate_from_data,
     learned_surrogate,
@@ -221,6 +222,65 @@ def test_wall_swapping_surrogates_leaves_the_posterior_alone() -> None:
     x0 = np.zeros(5, dtype=np.uint8)
     errors = []
     for surrogate in (analytic, garbage):
+        kernel = SurrogateIndependence(surrogate)
+        P = MetropolisEngine(target, kernel).transition_matrix()
+        pi = target.enumerate_exact()
+        np.testing.assert_allclose(pi @ P, pi, atol=1e-12, rtol=0.0)
+        result = MetropolisEngine(target, kernel).run(n_steps=25_000, x0=x0, seed=7)
+        errors.append(pip_error(result.states[5_000:], exact_pips))
+
+    assert errors[0] < 0.12
+    assert errors[1] < 0.12
+
+
+def test_corrupt_surrogate_re_pins_and_is_seeded() -> None:
+    X, y = _clear_signal(n_vars=6, seed=0)
+    clean = ising_surrogate_from_data(X, y)
+    a = corrupt_surrogate(clean, relative_sigma=1.0, seed=4)
+    b = corrupt_surrogate(clean, relative_sigma=1.0, seed=4)
+    c = corrupt_surrogate(clean, relative_sigma=1.0, seed=5)
+    np.testing.assert_allclose(a.h, b.h)
+    np.testing.assert_allclose(a.J, b.J)
+    assert not np.allclose(a.h, c.h)
+    np.testing.assert_allclose(
+        problem_frobenius_norm(a.h, a.J),
+        np.sqrt(a.n_vars),
+        atol=1e-12,
+        rtol=0.0,
+    )
+
+
+def test_corrupt_sigma_zero_is_a_pinned_clone() -> None:
+    X, y = _clear_signal(n_vars=6, seed=1)
+    clean = ising_surrogate_from_data(X, y)
+    clone = corrupt_surrogate(clean, relative_sigma=0.0, seed=0)
+    np.testing.assert_allclose(clone.h, clean.h, atol=1e-12, rtol=0.0)
+    np.testing.assert_allclose(clone.J, clean.J, atol=1e-12, rtol=0.0)
+
+
+def test_corrupt_destroys_spearman() -> None:
+    X, y = _clear_signal(n_vars=6, seed=2)
+    target = SpikeSlabTarget(X, y)
+    learned = learned_surrogate(target, seed=0)
+    clean = diagnose_surrogate(learned, target)
+    wrecked = diagnose_surrogate(corrupt_surrogate(learned, 4.0, seed=1), target)
+    assert clean.spearman > 0.85
+    assert wrecked.spearman < clean.spearman - 0.2
+
+
+def test_wall_corrupted_surrogate_leaves_posterior_alone() -> None:
+    """P0: destroying the surrogate may change speed, never the posterior."""
+    rng = np.random.Generator(np.random.PCG64(3))
+    X = rng.standard_normal((40, 5))
+    y = X[:, 0] + 0.25 * rng.standard_normal(40)
+    target = SpikeSlabTarget(X, y, prior_inclusion=0.4)
+    exact_pips = target.posterior_inclusion_probs_exact()
+    learned = learned_surrogate(target, seed=0)
+    wrecked = corrupt_surrogate(learned, relative_sigma=4.0, seed=9)
+
+    x0 = np.zeros(5, dtype=np.uint8)
+    errors = []
+    for surrogate in (learned, wrecked):
         kernel = SurrogateIndependence(surrogate)
         P = MetropolisEngine(target, kernel).transition_matrix()
         pi = target.enumerate_exact()

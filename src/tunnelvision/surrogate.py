@@ -259,6 +259,50 @@ def learned_surrogate(
     return IsingSurrogate(h=h, J=J, kind="learned", meta=meta)
 
 
+def corrupt_surrogate(
+    surrogate: IsingSurrogate,
+    relative_sigma: float,
+    seed: int,
+) -> IsingSurrogate:
+    """Add relative Gaussian noise to (h, J), then re-pin ||H_prob||_F.
+
+    Isolates landscape *shape* from overall scale: after this, quench α
+    is still 1. σ = 0 is a pinned clone. The E02 ablation asks where
+    the gap dies as this noise grows; accept/reject must not notice.
+    """
+    if relative_sigma < 0.0 or not np.isfinite(relative_sigma):
+        raise ValueError(
+            f"relative_sigma must be a non-negative finite value, got {relative_sigma}"
+        )
+
+    h = np.asarray(surrogate.h, dtype=np.float64).copy()
+    j_mat = np.asarray(surrogate.J, dtype=np.float64).copy()
+    if relative_sigma > 0.0:
+        rng = np.random.Generator(np.random.PCG64(seed))
+        h_rms = float(np.sqrt(np.mean(h * h)))
+        if h_rms <= 0.0:
+            h_rms = 1.0
+        j_off = j_mat.copy()
+        np.fill_diagonal(j_off, 0.0)
+        j_rms = float(np.sqrt(np.mean(j_off * j_off)))
+        if j_rms <= 0.0:
+            j_rms = 1.0
+        h = h + relative_sigma * h_rms * rng.standard_normal(h.shape)
+        j_mat = j_mat + relative_sigma * j_rms * rng.standard_normal(j_mat.shape)
+        j_mat = 0.5 * (j_mat + j_mat.T)
+        np.fill_diagonal(j_mat, 0.0)
+
+    h, j_mat, fro_scale = _pin_frobenius(h, j_mat)
+    meta = {
+        **surrogate.meta,
+        "corrupt_relative_sigma": float(relative_sigma),
+        "corrupt_seed": int(seed),
+        "corrupt_frobenius_scale": fro_scale,
+        "frobenius_norm": problem_frobenius_norm(h, j_mat),
+    }
+    return IsingSurrogate(h=h, J=j_mat, kind=surrogate.kind, meta=meta)
+
+
 def diagnose_surrogate(surrogate: IsingSurrogate, target: Target) -> SurrogateDiagnosis:
     """Ground-state rank and Spearman(−E, log p) over the full 2^p cube."""
     if surrogate.n_vars != target.n_vars:

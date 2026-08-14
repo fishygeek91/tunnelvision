@@ -60,6 +60,151 @@ def _validate_range(name: str, bounds: tuple[float, float]) -> tuple[float, floa
     return lo, hi
 
 
+def _validate_unit_interval(name: str, value: float) -> float:
+    number = float(value)
+    if not np.isfinite(number) or number < 0.0 or number > 1.0:
+        raise ValueError(f"{name} must be in [0, 1], got {value}")
+    return number
+
+
+def depolarize_proposal(proposal: np.ndarray, depolarize: float) -> np.ndarray:
+    """Global depolarizing channel on a proposal matrix.
+
+    Q_lambda = (1-lambda) Q + (lambda / 2^n) 11^T. The channel is unital
+    and commutes with the (gamma, t) average, so this is the exact-tier
+    noise model at p=10: cheap, symmetric, and row-stochastic whenever Q is.
+    """
+    q = np.asarray(proposal, dtype=np.float64)
+    if q.ndim != 2 or q.shape[0] != q.shape[1]:
+        raise ValueError("proposal matrix must be square")
+    lam = _validate_unit_interval("depolarize", depolarize)
+    dim = int(q.shape[0])
+    if dim < 1:
+        raise ValueError("proposal matrix must not be empty")
+    mixed = (1.0 - lam) * q + lam / dim
+    np.clip(mixed, 0.0, None, out=mixed)
+    row_sums = mixed.sum(axis=1, keepdims=True)
+    if np.any(row_sums <= 0.0):
+        raise ValueError("depolarized proposal has a zero row")
+    return mixed / row_sums
+
+
+def fit_global_depolarize(reference: np.ndarray, observed: np.ndarray) -> float:
+    """Least-squares λ for ``observed ≈ (1−λ) reference + λ/2^n 11ᵀ``.
+
+    The global channel is a one-parameter family, so this is the exact
+    Frobenius projection onto it. Used to map Aer per-gate error onto
+    the analytic λ the p=10 sweep actually runs.
+    """
+    ref = np.asarray(reference, dtype=np.float64)
+    obs = np.asarray(observed, dtype=np.float64)
+    if ref.shape != obs.shape or ref.ndim != 2 or ref.shape[0] != ref.shape[1]:
+        raise ValueError("reference and observed must be square matrices of the same shape")
+    dim = int(ref.shape[0])
+    if dim < 1:
+        raise ValueError("proposal matrix must not be empty")
+    direction = np.full((dim, dim), 1.0 / dim, dtype=np.float64) - ref
+    residual = obs - ref
+    denom = float(np.sum(direction * direction))
+    if denom <= 0.0:
+        return 0.0
+    fitted = float(np.sum(direction * residual) / denom)
+    return float(np.clip(fitted, 0.0, 1.0))
+
+
+def depolarizing_noise_model(gate_error: float) -> Any:
+    """Aer ``NoiseModel``: depolarizing after every RX / RZ / RZZ.
+
+    Same ``gate_error`` on 1q and 2q gates — the 2q channel is still
+    the harsher one (it replaces a two-qubit state with the maximally
+    mixed state). Unital, so the symmetric-q claim survives. Amplitude
+    damping is a different, non-unital story; that is the hardware audit.
+    """
+    from qiskit_aer.noise import NoiseModel, depolarizing_error
+
+    p_err = _validate_unit_interval("gate_error", gate_error)
+    model = NoiseModel()
+    if p_err == 0.0:
+        return model
+    model.add_all_qubit_quantum_error(depolarizing_error(p_err, 1), ["rx", "rz"])
+    model.add_all_qubit_quantum_error(depolarizing_error(p_err, 2), ["rzz"])
+    return model
+
+
+def aer_noisy_proposal_matrix(
+    kernel: QuenchKernel,
+    gate_error: float,
+    *,
+    n_gamma: int | None = None,
+    n_t: int | None = None,
+) -> np.ndarray:
+    """Density-matrix ``Q`` for the Trotter circuit under per-gate depolarizing.
+
+    Rows are computational-basis inputs; each is the diagonal of the
+    noisy density matrix, averaged over the same (γ, t) quadrature
+    ``proposal_matrix`` uses. p ≤ 7 and a reduced grid only — a full
+    Aer ``Q`` at p=10 is a wall-clock decision, not a correctness one.
+
+    Per-gate noise is unital but only approximately symmetric (noise
+    sits after each gate, not in a palindrome of its own). The
+    exact-tier sweep uses ``depolarize_proposal``, which is exactly
+    ``Q = Q.T``. This function exists to show that model is a fair
+    proxy, not to replace it.
+    """
+    if kernel.evolution != "trotter":
+        raise ValueError("aer_noisy_proposal_matrix realizes the Trotter circuit")
+    n_g = int(kernel.n_gamma if n_gamma is None else n_gamma)
+    n_times = int(kernel.n_t if n_t is None else n_t)
+    if n_g < 1 or n_times < 1:
+        raise ValueError("n_gamma and n_t must be at least 1")
+
+    from qiskit_aer import AerSimulator
+
+    grid = parameter_grid(kernel.gamma_range, kernel.t_range, n_g, n_times)
+    dim = 1 << kernel.n_vars
+    noise_model = depolarizing_noise_model(gate_error)
+    sim_kwargs: dict[str, Any] = {
+        "method": "density_matrix",
+        "max_parallel_threads": 1,
+    }
+    if gate_error > 0.0:
+        sim_kwargs["noise_model"] = noise_model
+    sim = AerSimulator(**sim_kwargs)
+
+    circuits = []
+    for gamma, t in grid:
+        for x_idx in range(dim):
+            circuit = kernel._trotter_circuit(
+                _unpack_index(x_idx, kernel.n_vars),
+                float(gamma),
+                float(t),
+                measure=False,
+            )
+            circuit.save_density_matrix()
+            circuits.append(circuit)
+
+    accumulated = np.zeros((dim, dim), dtype=np.float64)
+    batch_size = 32
+    for start in range(0, len(circuits), batch_size):
+        chunk = circuits[start : start + batch_size]
+        result = sim.run(chunk, shots=1).result()
+        for offset, _circuit in enumerate(chunk):
+            data = result.data(offset)
+            rho = np.asarray(data["density_matrix"], dtype=np.complex128)
+            probs = np.real(np.diag(rho))
+            total = float(probs.sum())
+            if total <= 0.0 or not np.isfinite(total):
+                raise RuntimeError("noisy density matrix has no probability mass")
+            accumulated[(start + offset) % dim] += probs / total
+
+    accumulated /= grid.shape[0]
+    np.clip(accumulated, 0.0, None, out=accumulated)
+    row_sums = accumulated.sum(axis=1, keepdims=True)
+    if np.any(row_sums <= 0.0):
+        raise RuntimeError("aer noisy proposal has a zero row")
+    return accumulated / row_sums
+
+
 class QuenchKernel(Kernel):
     """Layden quench proposals, simulator-backed.
 
@@ -288,6 +433,46 @@ class QuenchKernel(Kernel):
                 kwargs["noise_model"] = self.noise_model
             self._aer_sim = AerSimulator(**kwargs)
         return self._aer_sim
+
+
+class DepolarizedQuenchKernel(Kernel):
+    """Quench proposals mixed with a global depolarizing channel.
+
+    With probability ``depolarize`` the proposal is uniform on {0,1}^n;
+    otherwise it is a fresh quench draw. That mixture is exactly
+    ``depolarize_proposal(Q, λ)``, so ``propose`` and ``proposal_matrix``
+    agree with the same (γ, t) averaging convention the inner kernel
+    already uses. Symmetric (unital) ⇒ log-q is 0.0.
+
+    Share one inner ``QuenchKernel`` across λ values — ``Q`` is cached
+    on the inner object and the channel is a rank-1 update.
+    """
+
+    name = "quench-depolarized"
+
+    def __init__(self, inner: QuenchKernel, depolarize: float) -> None:
+        if not isinstance(inner, QuenchKernel):
+            raise TypeError("DepolarizedQuenchKernel wraps a QuenchKernel")
+        self.inner = inner
+        self.depolarize = _validate_unit_interval("depolarize", depolarize)
+        self.n_vars = inner.n_vars
+        self.name = f"{inner.name}-depol-{self.depolarize:g}"
+        self._proposal_cache: np.ndarray | None = None
+
+    def propose(self, x: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, float, float]:
+        if self.depolarize >= 1.0 or (self.depolarize > 0.0 and rng.random() < self.depolarize):
+            y_idx = int(rng.integers(0, 1 << self.n_vars))
+            return _unpack_index(y_idx, self.n_vars), 0.0, 0.0
+        return self.inner.propose(x, rng)
+
+    def proposal_matrix(self, n_vars: int) -> np.ndarray:
+        if n_vars != self.n_vars:
+            raise ValueError(f"expected n_vars={self.n_vars}, got {n_vars}")
+        if self._proposal_cache is None:
+            self._proposal_cache = depolarize_proposal(
+                self.inner.proposal_matrix(n_vars), self.depolarize
+            )
+        return self._proposal_cache
 
 
 class HardwareQuenchKernel(QuenchKernel):

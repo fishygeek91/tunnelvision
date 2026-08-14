@@ -16,15 +16,23 @@ wall-clock cannot pose as a win.
 Four independent chains and split-R̂ catch stuck modes at high ρ.
 Sampled p = 20–27 is a later session.
 
+**Ablations (exact tier):** depolarizing-noise sweep (global λ, Aer
+check at p=6) and learned-surrogate corruption sweep. Question: where
+does the remaining quench/ADS gap die, and does PIP error stay at
+Monte Carlo error while it dies?
+
 ```bash
 uv run python -m experiments.E02_tunnelvision_demo.run              # diabetes p=10
 uv run python -m experiments.E02_tunnelvision_demo.run --quick      # p=5 synthetic smoke
 uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep    # ρ-sweep p=10
 uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep --quick
+uv run python -m experiments.E02_tunnelvision_demo.run_ablations    # noise + surrogate sweeps
+uv run python -m experiments.E02_tunnelvision_demo.run_ablations --quick
 ```
 
 Writes `results/E02/summary.md` (tracked on a full run), plus gitignored
 `scoreboard.csv`, `scoreboard.png`, `meta.json`, and the two
 surrogate-vs-logp scatter plots. The ρ-sweep writes
-`results/E02/rho_sweep/summary.md` and `gap_vs_rho.png`. `--quick`
-writes to `results/E02_quick/` and is not the gate.
+`results/E02/rho_sweep/summary.md` and `gap_vs_rho.png`. Ablations write
+`results/E02/ablations/summary.md`. `--quick` writes to
+`results/E02_quick/` and is not the gate.

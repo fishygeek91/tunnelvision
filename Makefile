@@ -1,4 +1,4 @@
-.PHONY: install test lint fmt e01 e02 e02-rho e03
+.PHONY: install test lint fmt e01 e02 e02-rho e02-ablations e03
 
 install:
 	uv sync --all-extras
@@ -20,6 +20,9 @@ e02:
 
 e02-rho:
 	uv run python -m experiments.E02_tunnelvision_demo.run_rho_sweep
+
+e02-ablations:
+	uv run python -m experiments.E02_tunnelvision_demo.run_ablations
 
 e03:
 	uv run python -m experiments.E03_maxwells_daemon.run

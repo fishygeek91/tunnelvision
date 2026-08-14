@@ -136,12 +136,14 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 
 ### E02 — the headline demo (P1, 🟡)
 
-- [ ] `data/loaders.py`: diabetes (sklearn, p=10, standardized) and
+- [x] `data/loaders.py`: diabetes (sklearn, p=10, standardized) and
       `correlated_synthetic()` (equicorrelated or AR(1) design, tunable ρ,
       sparse true support, fixed SNR).
 - [ ] E02a: exact tier at p=10 — spectral gap for all five kernels
       (uniform, single-flip, ADS, quench-analytic, quench-learned), PIP
       accuracy vs. enumeration, ESS/step and ESS/wall-clock-sec.
+      Scaffold is in (`experiments/E02_tunnelvision_demo/run.py --quick`
+      smoke-runs a p=5 synthetic). Full diabetes figure is the next session.
       ⚠️ Report per-step AND per-second: the quench kernel pays a large
       constant factor in simulation; hiding that is the quantum-papers
       failure mode we built this repo to avoid.

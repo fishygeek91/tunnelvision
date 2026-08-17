@@ -6,8 +6,8 @@ This script bounds the residual by comparing sampled posteriors
 to the enumerated exact target. Accept/reject is still the exact
 g-prior on every arm — only the proposal symmetry is under test.
 
-Arms: ideal quench (statevector Trotter), HardwareQuenchKernel
-driven by Aer + amplitude damping, and add-delete-swap (the
+Arms: ideal quench (statevector Trotter), one HardwareQuenchKernel
++ Aer amplitude-damping arm per γ, and add-delete-swap (the
 baseline whose TV should sit at Monte Carlo error).
 
 ``--quick`` drops to p=5 so the entry point is smoke-testable.
@@ -46,7 +46,23 @@ from tunnelvision.surrogate import IsingSurrogate, learned_surrogate
 from tunnelvision.targets.spike_slab import SpikeSlabTarget
 
 
+def _resolve_dampings(config: dict[str, Any]) -> list[float]:
+    """Prefer ``dampings``; a single ``damping`` still works for --quick."""
+    if "dampings" in config:
+        values = [float(x) for x in config["dampings"]]
+    elif "damping" in config:
+        values = [float(config["damping"])]
+    else:
+        raise ValueError("config needs dampings: [...] or damping: <float>")
+    if not values:
+        raise ValueError("dampings must not be empty")
+    if any(gamma < 0.0 or gamma > 1.0 for gamma in values):
+        raise ValueError(f"dampings must lie in [0, 1], got {values}")
+    return values
+
+
 def _apply_quick(config: dict[str, Any]) -> None:
+    config["dampings"] = [0.1]
     config["damping"] = 0.1
     config["pool_size"] = 4
     config["datasets"] = [
@@ -99,13 +115,12 @@ def _cache_stats(kernel: Any) -> dict[str, float]:
     }
 
 
-def _make_arms(
+def _make_ad_kernel(
     learned: IsingSurrogate,
     quench_cfg: dict[str, Any],
     damping: float,
     pool_size: int,
-) -> list[Any]:
-    ideal = _quench(learned, "quench-ideal", {**quench_cfg, "backend": "statevector"})
+) -> HardwareQuenchKernel:
     sampler = AerCircuitSampler(
         noise_model=amplitude_damping_noise_model(damping),
         shots=1,
@@ -121,35 +136,67 @@ def _make_arms(
         sampler=sampler,
         pool_size=pool_size,
     )
-    hardware.name = "quench-ad"
+    hardware.name = f"quench-ad-{damping:g}"
+    return hardware
+
+
+def _make_arms(
+    learned: IsingSurrogate,
+    quench_cfg: dict[str, Any],
+    dampings: list[float],
+    pool_size: int,
+) -> list[Any]:
+    ideal = _quench(learned, "quench-ideal", {**quench_cfg, "backend": "statevector"})
     ads = AddDeleteSwap()
-    return [ideal, hardware, ads]
+    damped = [_make_ad_kernel(learned, quench_cfg, gamma, pool_size) for gamma in dampings]
+    return [ideal, *damped, ads]
+
+
+def _ad_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    damped = [row for row in rows if str(row["kernel"]).startswith("quench-ad")]
+    return sorted(damped, key=lambda row: float(row.get("damping", 0.0)))
+
+
+def _mixed(row: dict[str, Any]) -> bool:
+    return float(row["rhat_size"]) <= 1.1
 
 
 def _read_audit(rows: list[dict[str, Any]]) -> list[str]:
     lines = [
         "ADS is the exact-kernel baseline: its TV and PIP error are",
         "Monte Carlo noise, not bias. Ideal quench is the symmetric",
-        "Trotter proposal. ``quench-ad`` is HardwareQuenchKernel with",
-        "Aer amplitude damping — the non-unital stand-in for hardware.",
-        "A TV that tracks ADS is the approximation holding; a TV that",
-        "blows past ADS is the residual the live-hardware audit must",
-        "quote before any QPU claim.",
+        "Trotter proposal. Each ``quench-ad-γ`` arm is",
+        "HardwareQuenchKernel with Aer amplitude damping — the",
+        "non-unital stand-in for hardware. TV that tracks ADS is the",
+        "approximation holding; TV that grows with γ is the residual",
+        "the live-hardware audit must quote before any QPU claim.",
+        "R̂ > 1.1 on a damped arm is reported as \"does not mix\"",
+        "rather than a clean bias number.",
         "",
     ]
     datasets = list(dict.fromkeys(str(row["dataset"]) for row in rows))
     for dataset in datasets:
         subset = [row for row in rows if row["dataset"] == dataset]
         ads = next(row for row in subset if row["kernel"] == "add-delete-swap")
-        ad = next(row for row in subset if row["kernel"] == "quench-ad")
+        ideal = next(row for row in subset if row["kernel"] == "quench-ideal")
         ads_tv = float(ads["tv_distance"])
-        ad_tv = float(ad["tv_distance"])
-        ratio = ad_tv / ads_tv if ads_tv > 0.0 else float("inf")
         lines.append(
-            f"- **{dataset}**: quench-ad TV {ad_tv:.3f} vs ADS {ads_tv:.3f} "
-            f"({ratio:.2f}×). PIP error {float(ad['pip_error_pooled']):.3f} "
-            f"vs ADS {float(ads['pip_error_pooled']):.3f}."
+            f"- **{dataset}**: ADS TV {ads_tv:.3f} (R̂ {float(ads['rhat_size']):.3f}"
+            f"{'' if _mixed(ads) else ', did not mix'}). "
+            f"Ideal quench TV {float(ideal['tv_distance']):.3f} "
+            f"(R̂ {float(ideal['rhat_size']):.3f}"
+            f"{'' if _mixed(ideal) else ', did not mix'})."
         )
+        for ad in _ad_rows(subset):
+            ad_tv = float(ad["tv_distance"])
+            ratio = ad_tv / ads_tv if ads_tv > 0.0 else float("inf")
+            mix = "mixed" if _mixed(ad) else "does not mix"
+            lines.append(
+                f"  - γ={float(ad['damping']):g}: TV {ad_tv:.3f} ({ratio:.2f}× ADS), "
+                f"PIP {float(ad['pip_error_pooled']):.3f}, "
+                f"R̂ {float(ad['rhat_size']):.3f} ({mix}), "
+                f"accept {float(ad['acceptance_rate']):.3f}."
+            )
     lines.append("")
     return lines
 
@@ -173,7 +220,7 @@ def _write_summary(
         f"- started (UTC): {meta['started_utc']}",
         f"- finished (UTC): {meta['finished_utc']}",
         f"- package versions: {', '.join(f'{k}={v}' for k, v in meta['versions'].items())}",
-        f"- damping γ: {config['damping']}",
+        f"- damping γ: {', '.join(f'{x:g}' for x in _resolve_dampings(config))}",
         f"- pool size: {config['pool_size']}",
         f"- quench: {config['quench'].get('evolution', 'trotter')}, "
         f"grid {config['quench']['n_gamma']}×{config['quench']['n_t']}",
@@ -217,8 +264,9 @@ def _write_summary(
             "## Notes",
             "",
             "- This is the methodology the live-hardware audit must reuse.",
-            "- ``quench-ad`` returns log-q = 0 (the approximation). The",
-            "  residual lives in TV / PIP error, not in the Hastings ratio.",
+            "- Each ``quench-ad-γ`` arm returns log-q = 0 (the",
+            "  approximation). The residual lives in TV / PIP error,",
+            "  not in the Hastings ratio.",
             "- Physical noise rungs (DD, twirling, idle) are still open.",
             "",
         ]
@@ -257,9 +305,7 @@ def main(argv: list[str] | None = None) -> int:
     output_dir = REPO_ROOT / str(config.get("output_dir", "results/E03/bias_audit"))
     output_dir.mkdir(parents=True, exist_ok=True)
     prior = float(config["prior_inclusion"])
-    damping = float(config["damping"])
-    if damping < 0.0 or damping > 1.0:
-        raise ValueError(f"damping must lie in [0, 1], got {damping}")
+    dampings = _resolve_dampings(config)
     pool_size = int(config["pool_size"])
     if pool_size < 1:
         raise ValueError(f"pool_size must be at least 1, got {pool_size}")
@@ -280,7 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     print(
         f"E03 bias audit: datasets={[_dataset_key(s) for s in config['datasets']]} "
-        f"damping={damping} pool_size={pool_size}",
+        f"dampings={dampings} pool_size={pool_size}",
         flush=True,
     )
 
@@ -300,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  dataset {key}: {label}, n_vars={target.n_vars}", flush=True)
         seeds = [base_seed + chain_index for chain_index in range(n_chains)]
         starts = _random_starts(target.n_vars, seeds)
-        for kernel in _make_arms(learned, quench_cfg, damping, pool_size):
+        for kernel in _make_arms(learned, quench_cfg, dampings, pool_size):
             print(f"    scoring {kernel.name} on {key}...", flush=True)
             engine = MetropolisEngine(target, kernel)
             scored = run_replicated_chains(
@@ -312,12 +358,16 @@ def main(argv: list[str] | None = None) -> int:
                 exact_pips=exact_pips,
                 exact_pi=pi,
             )
+            damping_value = float("nan")
+            if kernel.name.startswith("quench-ad-"):
+                damping_value = float(kernel.name.rsplit("-", 1)[-1])
             rows.append(
                 {
                     **scored,
                     **_cache_stats(kernel),
                     "dataset": key,
                     "kernel": kernel.name,
+                    "damping": damping_value,
                 }
             )
             print(

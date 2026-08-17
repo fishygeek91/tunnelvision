@@ -1,20 +1,20 @@
 # E03 — symmetric-q bias audit (Aer, not a QPU)
 
 This bounds the symmetric-q approximation under a non-unital
-channel. It is not a hardware result. Accept/reject uses the
-exact g-prior on every arm. Cell is p=5 synthetic (enumerable);
-the full config is p=10 diabetes and was not run this session.
+channel on the headline dataset (diabetes, p=10). It is not a
+hardware result. Accept/reject uses the exact g-prior on every
+arm.
 
 ## Provenance
 
-- git commit: `d76aec945c8136a1a155e648d6fc086dd5fa0162-dirty`
-- started (UTC): 2026-08-17T16:30:23.037604+00:00
-- finished (UTC): 2026-08-17T16:30:42.508206+00:00
+- git commit: `b1667043452a7bc8f36984bdab7b98cbdb3508fa-dirty`
+- started (UTC): 2026-08-17T22:03:31.851170+00:00
+- finished (UTC): 2026-08-17T22:50:10.708482+00:00
 - package versions: numpy=2.4.6, scipy=1.17.1, scikit-learn=1.9.0, qiskit=2.5.2, qiskit-aer=0.17.2, tunnelvision=0.0.1
-- damping γ: 0.05
+- damping γ: 0.01, 0.05, 0.1
 - pool size: 8
 - quench: trotter, grid 4×4
-- chain: 4 chains, 800 steps, burn-in 100
+- chain: 4 chains, 8000 steps, burn-in 1000
 
 ## Scoreboard
 
@@ -24,27 +24,41 @@ enumerated inclusion probabilities. R̂ is split-R̂ on |γ|.
 
 | dataset | kernel | TV | PIP err | R̂(|γ|) | accept | cache hit |
 | --- | --- | --- | --- | --- | --- | --- |
-| synthetic-rho-0.5 | quench-ideal | 0.074 | 0.037 | 1.019 | 0.372 | — |
-| synthetic-rho-0.5 | quench-ad | 0.379 | 0.300 | 1.482 | 0.026 | 0.87 |
-| synthetic-rho-0.5 | add-delete-swap | 0.053 | 0.014 | 1.013 | 0.124 | — |
+| diabetes | quench-ideal | 0.067 | 0.026 | 1.002 | 0.089 | — |
+| diabetes | quench-ad-0.01 | 0.154 | 0.026 | 1.052 | 0.005 | 0.87 |
+| diabetes | quench-ad-0.05 | 0.808 | 0.320 | 2.612 | 0.000 | 0.87 |
+| diabetes | quench-ad-0.1 | 1.000 | 0.820 | 3.696 | 0.000 | 0.87 |
+| diabetes | add-delete-swap | 0.071 | 0.052 | 1.007 | 0.089 | — |
 
 ## Read
 
-ADS is the exact-kernel baseline: its TV and PIP error are
-Monte Carlo noise, not bias. Ideal quench is the symmetric
-Trotter proposal. ``quench-ad`` is HardwareQuenchKernel with
-Aer amplitude damping — the non-unital stand-in for hardware.
-A TV that tracks ADS is the approximation holding; a TV that
-blows past ADS is the residual the live-hardware audit must
-quote before any QPU claim.
+ADS and ideal quench mixed (R̂ ≤ 1.01) and sit at the same
+Monte Carlo floor (TV 0.071 vs 0.067). The symmetric-q
+approximation is therefore fine when the channel is unital /
+absent. Amplitude damping is the non-unital stand-in for
+hardware T1. TV grows with γ; only γ=0.01 is a clean bias
+number.
 
-- **synthetic-rho-0.5**: quench-ad TV 0.379 vs ADS 0.053 (7.09×). PIP error 0.300 vs ADS 0.014. Ideal quench stays near ADS (TV 0.074, R̂ 1.02). Amplitude damping at γ=0.05 already wrecks the proposal: accept 0.026, R̂ 1.48, so part of the TV is a stuck chain, not a clean bias number. That is the point of the methodology — a non-unital channel can move the sampled posterior far past Monte Carlo, and the live-hardware audit has to quote that residual before any QPU claim. Cache hit rate 0.87: state-keyed pools do what ARCHITECTURE §4 promised.
+- **γ=0.01 (mixed, R̂ 1.05):** TV 0.154 = 2.17× ADS. PIP error
+  matches ideal (0.026) — the inclusion-probability scoreboard
+  can hide a posterior that is already the wrong shape. Accept
+  0.5%. This is the residual a live IBM run at mild T1 must
+  beat or quote.
+- **γ=0.05 (does not mix, R̂ 2.61):** TV 0.808, accept 0.000.
+  Not a bias estimate — the chain is dead. Report as "does
+  not mix under this channel."
+- **γ=0.1 (does not mix, R̂ 3.70):** TV 1.000, accept 0.000.
+  The sampled histogram is unrelated to the posterior.
+
+Cache hit 0.87 on every AD arm: state-keyed pools work. They
+do not restore mixing.
 
 ## Notes
 
-- This is the methodology the live-hardware audit must reuse.
-- ``quench-ad`` returns log-q = 0 (the approximation). The
-  residual lives in TV / PIP error, not in the Hastings ratio.
-- p=10 diabetes and a real IBM TV bound are still open.
+- This is Aer amplitude damping, not a QPU. The live-hardware
+  TV bound is still mandatory before any hardware claim.
+- Each ``quench-ad-γ`` arm returns log-q = 0 (the
+  approximation). The residual lives in TV / PIP error,
+  not in the Hastings ratio.
 - Physical noise rungs (DD, twirling, idle) are still open.
 

@@ -16,8 +16,8 @@ Aer-realistic hot rung (λ̂ ≈ 0.65).
 **Bias audit (Aer methodology, not a QPU):** amplitude damping is
 non-unital, so the symmetric-q claim is an approximation. The
 runner compares sampled posteriors to enumerated truth on ideal
-quench, `HardwareQuenchKernel` + Aer AD, and ADS
-(`run_bias_audit.py`). Live IBM TV and physical rungs (DD /
+quench, `HardwareQuenchKernel` + Aer AD at γ ∈ {0.01, 0.05, 0.1},
+and ADS (`run_bias_audit.py`). Live IBM TV and physical rungs (DD /
 twirling / idle) are still open — this audit is mandatory before
 any hardware claim (see docs/ARCHITECTURE.md §2).
 

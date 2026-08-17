@@ -209,11 +209,14 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
       ⚠️ Credentials via env only — the .gitignore and cursor rules
       already enforce this; don't route around them in notebooks.
       Live IBM jobs are still open (wired, not exercised).
-- [x] Aer amplitude-damping bias-audit *methodology* (see ARCHITECTURE
-      §2): `experiments/E03_maxwells_daemon/run_bias_audit.py` compares
-      sampled posteriors to enumerated truth under a non-unital
-      channel. Write-up in `results/E03/bias_audit/summary.md`.
-      ⚠️ This is not a QPU result. The live-hardware TV bound is
+- [x] Aer amplitude-damping bias-audit (see ARCHITECTURE §2):
+      `run_bias_audit.py` vs enumerated truth on diabetes p=10.
+      Ideal quench matches ADS (TV 0.067 vs 0.071, both R̂≈1.00).
+      γ=0.01 mixes (R̂ 1.05) at TV 0.154 = 2.17× ADS — the
+      residual a hardware claim must quote. γ≥0.05 does not mix
+      (accept 0, R̂ 2.6–3.7). Write-up in
+      `results/E03/bias_audit/summary.md`.
+      ⚠️ This is Aer, not a QPU. The live-hardware TV bound is
       still mandatory before ANY hardware claim leaves the repo.
 - [ ] Live hardware TV bound: run the audit on IBM and report the
       sampled-vs-enumerated total-variation deviation.

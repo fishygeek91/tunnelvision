@@ -1,9 +1,9 @@
 # E03 — symmetric-q bias audit (methodology, not a QPU result).
 # Amplitude damping is non-unital, so q(y|x)=q(x|y) is an approximation.
 # This runner bounds the residual vs the enumerated posterior.
-# Full cell: p=10 diabetes. --quick drops to p=5 synthetic.
+# Full cell: p=10 diabetes, γ sweep. --quick drops to p=5 synthetic.
 prior_inclusion: 0.5
-damping: 0.05
+dampings: [0.01, 0.05, 0.1]
 pool_size: 8
 datasets:
   - name: diabetes
@@ -20,7 +20,7 @@ learned:
   ridge: 0.001
 chain:
   n_chains: 4
-  n_steps: 2000
-  burn_in: 400
+  n_steps: 8000
+  burn_in: 1000
   seed: 0
 output_dir: results/E03/bias_audit

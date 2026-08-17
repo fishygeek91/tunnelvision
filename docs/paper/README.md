@@ -1,6 +1,6 @@
 # Paper draft
 
-[paper.md](paper.md) is a full-article write-up of E01–E03, meant to be read on GitHub. It is not a submission PDF and not a hardware paper.
+[paper.md](paper.md) is a full-article write-up of E01-E03, meant to be read on GitHub. It is not a submission PDF and not a hardware paper.
 
 **What it is.** A negative result: a Layden quench on a 2-local surrogate of a spike-and-slab posterior does not beat add-delete-swap. Scheduled depolarizing noise does not rescue it. Amplitude damping at γ = 0.01 already doubles TV versus the enumerated posterior.
 

@@ -1,15 +1,15 @@
 # TunnelVision
 
-> Exact Bayesian variable selection with quantum tunneling proposals. Quantum dreams up the moves; Metropolis keeps them honest.
+> Exact Bayesian variable selection with quantum tunneling proposals. Quantum proposes; Metropolis accepts. The mixing advantage, on this target, is not there.
 
-TunnelVision is a research codebase exploring **quantum-enhanced MCMC** (Layden et al., [Nature 619, 282 (2023)](https://arxiv.org/abs/2203.12497)) as a proposal engine for **spike-and-slab Bayesian variable selection**. The quantum device only *proposes* moves; a classical Metropolis–Hastings accept/reject step evaluates the *exact* posterior, so the sampler remains unbiased no matter how noisy the hardware is. Noise can shrink the speedup — it can never corrupt the answer.
+TunnelVision is a research codebase that puts **quantum-enhanced MCMC** (Layden et al., [Nature 619, 282 (2023)](https://arxiv.org/abs/2203.12497)) inside an exact Metropolis–Hastings sampler for **spike-and-slab Bayesian variable selection**. The quantum device only *proposes*; accept/reject uses the exact g-prior. Unital noise can slow the chain without biasing it. Non-unital noise (amplitude damping / T1) can bias it if you still pretend the proposal is symmetric — we measured that.
 
-## The two research claims
+The two claims we actually tested:
 
-1. **TunnelVision (N1):** Layden-style quench proposals, driven by a cheap 2-local Ising *surrogate* of the posterior, mix faster than the field-standard add-delete-swap kernel on correlated-design variable selection — while sampling the exact posterior.
-2. **Maxwell's Daemon (N2):** hardware noise, deliberately *scheduled* (dynamical decoupling on/off, twirling levels, idle insertion), acts as a proposal-temperature ladder — hardware-native tempering with exactness intact.
+1. **N1.** A Layden quench driven by a 2-local Ising surrogate mixes faster than add-delete-swap on correlated-design variable selection. **It does not** (diabetes gap 0.40× ADS; ρ-sweep never crosses 1).
+2. **N2.** Scheduled depolarizing noise is useful proposal-tempering. **It heats, and it does not help.**
 
-See `docs/` for the research background (DEEPDIVE-01, NOVELTY-CHECK-01), architecture, and roadmap.
+Write-up: [`docs/paper/paper.md`](docs/paper/paper.md). Background and roadmap in `docs/`.
 
 ## Layout
 
@@ -46,9 +46,6 @@ reproducibility record for every experiment. (`pip install -e ".[dev]"` still wo
 
 ## Status
 
-Rung 1 is in: MH engine, diagnostics, classical kernels, Ising +
-spike-and-slab targets, exactness invariants, `QuenchKernel` (exact /
-Trotter / Aer), and the E01 Layden reproduction (gate passed:
-k_quench ≈ 0.32 vs k_uniform ≈ 1.02 at T=0.1). WP5 (analytic + learned
-Ising surrogates) is in. E02a (diabetes p=10 exact-tier scoreboard) and
-E02b (ρ-sweep, exact tier at p=10) are the current Rung-2 results.
+E01–E03 and the Aer bias audit are in. The experiment spine is done.
+The remaining electives are a live IBM TV bound and Ferguson-style
+coarse-graining. Draft: `docs/paper/paper.md`.

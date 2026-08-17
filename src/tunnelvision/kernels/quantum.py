@@ -16,14 +16,16 @@ amplitude damping does not — a non-unital ``noise_model`` is an
 approximation, and E03's bias audit must quantify it before any
 hardware claim.
 
-Two backends, one class: ``statevector`` (exact amplitudes, n ≤ ~14)
-and ``aer`` (the same Trotter circuit, sampled). ``proposal_matrix``
+Three backends, one circuit: ``statevector`` (exact amplitudes, n ≤ ~14),
+``aer`` (the same Trotter circuit, sampled), and ``hardware`` (batched
+pools via an injected sampler or IBM Runtime). ``proposal_matrix``
 always uses the statevector amplitudes averaged over a fixed (γ, t)
 grid so E01–E03 do not care which backend is proposing.
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, Literal
 
 import numpy as np
@@ -43,7 +45,7 @@ from tunnelvision.kernels.quench import (
 )
 from tunnelvision.targets.ising import symmetrize_couplings
 
-Backend = Literal["statevector", "aer"]
+Backend = Literal["statevector", "aer", "hardware"]
 
 
 def _unpack_index(index: int, n_vars: int) -> np.ndarray:
@@ -131,6 +133,28 @@ def depolarizing_noise_model(gate_error: float) -> Any:
     return model
 
 
+def amplitude_damping_noise_model(gamma: float) -> Any:
+    """Aer ``NoiseModel``: amplitude damping after every RX / RZ / RZZ.
+
+    Depolarizing is unital and keeps ``Q ≈ Q.T``. This channel is not —
+    it exists only so the E03 bias audit can bound the symmetric-q
+    approximation before any hardware claim. The Hastings ratio still
+    treats proposals as symmetric; the audit, not accept/reject, is
+    where the residual bias is allowed to show up.
+    """
+    from qiskit_aer.noise import NoiseModel, amplitude_damping_error
+
+    damp = _validate_unit_interval("gamma", gamma)
+    model = NoiseModel()
+    if damp == 0.0:
+        return model
+    one_qubit = amplitude_damping_error(damp)
+    two_qubit = one_qubit.tensor(one_qubit)
+    model.add_all_qubit_quantum_error(one_qubit, ["rx", "rz"])
+    model.add_all_qubit_quantum_error(two_qubit, ["rzz"])
+    return model
+
+
 def aer_noisy_proposal_matrix(
     kernel: QuenchKernel,
     gate_error: float,
@@ -213,7 +237,8 @@ class QuenchKernel(Kernel):
     evolution:
         ``exact`` uses dense expm (Nature Fig. 2). ``trotter`` uses the
         second-order product formula with ``trotter_dt`` (the circuit
-        that Aer / hardware actually run). Aer requires ``trotter``.
+        that Aer / hardware actually run). Aer and hardware require
+        ``trotter``.
     """
 
     name = "quench"
@@ -238,12 +263,16 @@ class QuenchKernel(Kernel):
         J_arr = symmetrize_couplings(J)
         if J_arr.shape != (h_arr.size, h_arr.size):
             raise ValueError(f"J shape {J_arr.shape} does not match h length {h_arr.size}")
-        if backend not in ("statevector", "aer"):
-            raise ValueError(f"backend must be 'statevector' or 'aer', got {backend!r}")
+        if backend not in ("statevector", "aer", "hardware"):
+            raise ValueError(
+                f"backend must be 'statevector', 'aer', or 'hardware', got {backend!r}"
+            )
         if evolution not in ("exact", "trotter"):
             raise ValueError(f"evolution must be 'exact' or 'trotter', got {evolution!r}")
-        if backend == "aer" and evolution != "trotter":
-            raise ValueError("Aer shots realize the Trotter circuit; use evolution='trotter'")
+        if backend in ("aer", "hardware") and evolution != "trotter":
+            raise ValueError(
+                "Aer/hardware shots realize the Trotter circuit; use evolution='trotter'"
+            )
         if trotter_dt <= 0.0:
             raise ValueError(f"trotter_dt must be positive, got {trotter_dt}")
         if shots_per_proposal < 1:
@@ -275,6 +304,8 @@ class QuenchKernel(Kernel):
         t = float(rng.uniform(*self.t_range))
         if self.backend == "aer":
             y = self._propose_aer(x_bin, gamma, t, rng)
+        elif self.backend == "hardware":
+            raise RuntimeError("use HardwareQuenchKernel.propose for the hardware backend")
         else:
             y = self._propose_statevector(x_bin, gamma, t, rng)
         return y, 0.0, 0.0
@@ -482,13 +513,191 @@ class DepolarizedQuenchKernel(Kernel):
         return self._proposal_cache
 
 
+class AerCircuitSampler:
+    """One Aer job per ``run`` call — the session path for hardware pools.
+
+    Matches the ``run(circuits) -> bitstrings`` contract
+    ``HardwareQuenchKernel`` uses. IBM Runtime is the same contract
+    behind ``backend_name``; tests never import it.
+    """
+
+    def __init__(self, noise_model: Any | None = None, shots: int = 1) -> None:
+        if shots < 1:
+            raise ValueError(f"shots must be at least 1, got {shots}")
+        from qiskit_aer import AerSimulator
+
+        kwargs: dict[str, Any] = {"max_parallel_threads": 1}
+        if noise_model is not None:
+            kwargs["noise_model"] = noise_model
+        self._sim = AerSimulator(**kwargs)
+        self.shots = int(shots)
+        self.n_jobs = 0
+
+    def run(self, circuits: Sequence[Any]) -> list[str]:
+        if not circuits:
+            raise ValueError("sampler.run requires at least one circuit")
+        self.n_jobs += 1
+        result = self._sim.run(list(circuits), shots=self.shots).result()
+        bitstrings: list[str] = []
+        for index in range(len(circuits)):
+            counts = result.get_counts(index)
+            if not counts:
+                raise RuntimeError("Aer job returned empty counts")
+            bitstrings.append(max(counts, key=counts.get))
+        return bitstrings
+
+
+def _runtime_sampler(backend_name: str) -> Any:
+    """Lazy IBM Runtime primitive wrapped to the injected-sampler contract.
+
+    Transpile-to-backend ISA is a live-hardware concern (next session).
+    This exists so ``backend_name`` is wired; tests inject a sampler.
+    Credentials come from the Runtime account file / env, never from
+    configs or notebooks.
+    """
+    try:
+        from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
+    except ImportError as exc:
+        raise ImportError(
+            "HardwareQuenchKernel(backend_name=...) requires the 'hardware' extra "
+            "(uv sync --extra hardware). Inject a sampler for simulator tests."
+        ) from exc
+
+    try:
+        service = QiskitRuntimeService()
+        backend = service.backend(backend_name)
+        primitive = SamplerV2(mode=backend)
+    except Exception as exc:
+        raise RuntimeError(
+            "No resolvable IBM Quantum account for backend "
+            f"{backend_name!r}. Use IBM_QUANTUM_TOKEN or qiskit-ibm.json "
+            "(never configs or notebooks), or inject a sampler."
+        ) from exc
+    return _RuntimeSamplerAdapter(primitive)
+
+
+class _RuntimeSamplerAdapter:
+    """Map SamplerV2 results onto ``run(circuits) -> bitstrings``."""
+
+    def __init__(self, primitive: Any) -> None:
+        self._primitive = primitive
+
+    def run(self, circuits: Sequence[Any]) -> list[str]:
+        job = self._primitive.run(list(circuits))
+        result = job.result()
+        bitstrings: list[str] = []
+        for index, _circuit in enumerate(circuits):
+            data = result[index].data
+            meas = getattr(data, "meas", None)
+            if meas is not None and hasattr(meas, "get_counts"):
+                counts = meas.get_counts()
+            elif hasattr(data, "get_counts"):
+                counts = data.get_counts()
+            else:
+                raise RuntimeError("Runtime result has no counts; cannot decode proposals")
+            if not counts:
+                raise RuntimeError("Runtime job returned empty counts")
+            bitstrings.append(max(counts, key=counts.get))
+        return bitstrings
+
+
 class HardwareQuenchKernel(QuenchKernel):
-    """IBM Runtime backend. Batches proposals: pre-samples a pool of
-    (state → proposal) pairs per job to amortize queue latency.
-    Credentials via environment only (see .cursor/rules) — never in code.
+    """Batched quench proposals for a QPU-shaped sampler.
+
+    Queue latency dominates wall clock, so a cache miss submits
+    ``pool_size`` Trotter circuits from the current state in one job
+    and later visits pop from that pool. States revisit constantly at
+    p=10; the hit-rate counters are how we know the batching paid off.
+
+    ``propose`` returns ``(y, 0.0, 0.0)``. That is the symmetric-q
+    *approximation*: time-symmetric Trotter plus unital noise would
+    make it exact; amplitude damping (and real hardware) is non-unital.
+    The E03 bias audit bounds the residual. Accept/reject still uses
+    the exact target — only the proposal symmetry is approximate.
+
+    Credentials via environment / ``qiskit-ibm.json`` only. The session
+    path injects a sampler (usually ``AerCircuitSampler``) so default
+    ``uv sync`` never imports ``qiskit-ibm-runtime``.
     """
 
     name = "quench-hw"
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        raise NotImplementedError("WP6: HardwareQuenchKernel via qiskit-ibm-runtime")
+    def __init__(
+        self,
+        h: np.ndarray,
+        J: np.ndarray,
+        gamma_range: tuple[float, float] = (0.25, 0.6),
+        t_range: tuple[float, float] = (2.0, 20.0),
+        trotter_dt: float = 0.8,
+        shots_per_proposal: int = 1,
+        n_gamma: int = 8,
+        n_t: int = 8,
+        *,
+        sampler: Any | None = None,
+        backend_name: str | None = None,
+        pool_size: int = 16,
+    ) -> None:
+        if pool_size < 1:
+            raise ValueError(f"pool_size must be at least 1, got {pool_size}")
+        if sampler is None and backend_name is None:
+            raise ValueError(
+                "HardwareQuenchKernel requires an injected sampler or backend_name. "
+                "Credentials via env / qiskit-ibm.json only — never configs."
+            )
+        resolved = sampler if sampler is not None else _runtime_sampler(str(backend_name))
+        super().__init__(
+            h,
+            J,
+            gamma_range=gamma_range,
+            t_range=t_range,
+            trotter_dt=trotter_dt,
+            backend="hardware",
+            evolution="trotter",
+            shots_per_proposal=shots_per_proposal,
+            n_gamma=n_gamma,
+            n_t=n_t,
+        )
+        self.sampler = resolved
+        self.backend_name = backend_name
+        self.pool_size = int(pool_size)
+        self._pools: dict[int, list[np.ndarray]] = {}
+        self.cache_hits = 0
+        self.cache_misses = 0
+        self.jobs_submitted = 0
+
+    def propose(self, x: np.ndarray, rng: np.random.Generator) -> tuple[np.ndarray, float, float]:
+        x_bin = as_binary_vector(x, self.n_vars)
+        key = state_to_index(x_bin)
+        pool = self._pools.get(key)
+        if not pool:
+            self.cache_misses += 1
+            self._fill_pool(x_bin, key, rng)
+            pool = self._pools[key]
+        else:
+            self.cache_hits += 1
+        # Symmetric-q approximation: hardware / amplitude damping is
+        # non-unital, so q(y|x) = q(x|y) is not exact. The bias audit
+        # measures the residual; the Hastings ratio does not try to.
+        return pool.pop(), 0.0, 0.0
+
+    def _fill_pool(self, x: np.ndarray, key: int, rng: np.random.Generator) -> None:
+        circuits = []
+        for _ in range(self.pool_size):
+            gamma = float(rng.uniform(*self.gamma_range))
+            t = float(rng.uniform(*self.t_range))
+            circuits.append(self._trotter_circuit(x, gamma, t, measure=True))
+        bitstrings = self.sampler.run(circuits)
+        if len(bitstrings) != self.pool_size:
+            raise RuntimeError(
+                f"sampler returned {len(bitstrings)} bitstrings, expected {self.pool_size}"
+            )
+        proposals = [_bitstring_to_state(raw, self.n_vars) for raw in bitstrings]
+        self._pools[key] = proposals
+        self.jobs_submitted += 1
+
+
+def _bitstring_to_state(bitstring: str, n_vars: int) -> np.ndarray:
+    cleaned = str(bitstring).replace(" ", "")
+    if len(cleaned) != n_vars:
+        raise RuntimeError(f"expected {n_vars}-bit string, got {bitstring!r}")
+    return _unpack_index(int(cleaned, 2), n_vars)

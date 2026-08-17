@@ -66,6 +66,22 @@ def test_replicated_chains_score_ads_on_ising() -> None:
     assert scored["rhat_size"] >= 1.0
     assert len(scored["pip_estimate"]) == 6
     assert scored["pip_error"] is None
+    assert scored["tv_distance"] is None
+
+
+def test_replicated_chains_report_tv_when_pi_given() -> None:
+    target = random_spin_glass(4, topology="all-to-all", seed=0, temperature=1.0)
+    engine = MetropolisEngine(target, UniformFlip())
+    scored = run_replicated_chains(
+        engine,
+        n_steps=200,
+        burn_in=20,
+        seeds=[0, 1],
+        x0=np.zeros(4, dtype=np.uint8),
+        exact_pi=target.enumerate_exact(),
+    )
+    assert scored["tv_distance"] is not None
+    assert 0.0 <= float(scored["tv_distance"]) <= 1.0
 
 
 def test_replicated_chains_reject_one_chain() -> None:

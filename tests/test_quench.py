@@ -12,7 +12,12 @@ import pytest
 
 from tunnelvision.bits import all_binary_states, state_to_index, states_to_indices
 from tunnelvision.engine import MetropolisEngine
-from tunnelvision.kernels.quantum import HardwareQuenchKernel, QuenchKernel
+from tunnelvision.kernels.quantum import (
+    AerCircuitSampler,
+    HardwareQuenchKernel,
+    QuenchKernel,
+    amplitude_damping_noise_model,
+)
 from tunnelvision.kernels.quench import (
     exact_unitary,
     frobenius_alpha,
@@ -255,9 +260,122 @@ def test_aer_propose_returns_binary_vector() -> None:
     assert log_fwd == 0.0 and log_rev == 0.0
 
 
-def test_hardware_kernel_is_still_a_stub() -> None:
-    with pytest.raises(NotImplementedError, match="WP6"):
+class _ScriptedSampler:
+    """Deterministic stand-in: one job, all-zero bitstrings, no Aer."""
+
+    def __init__(self, n_vars: int) -> None:
+        self.n_vars = int(n_vars)
+        self.n_jobs = 0
+        self.batch_sizes: list[int] = []
+
+    def run(self, circuits: list[object]) -> list[str]:
+        self.n_jobs += 1
+        self.batch_sizes.append(len(circuits))
+        return ["0" * self.n_vars] * len(circuits)
+
+
+def test_hardware_kernel_requires_sampler_or_account() -> None:
+    with pytest.raises(ValueError, match="injected sampler or backend_name"):
         HardwareQuenchKernel(np.ones(2), np.zeros((2, 2)))
+    sampler = _ScriptedSampler(2)
+    with pytest.raises(ValueError, match="pool_size"):
+        HardwareQuenchKernel(np.ones(2), np.zeros((2, 2)), sampler=sampler, pool_size=0)
+
+
+def test_hardware_kernel_backend_name_requires_runtime_extra() -> None:
+    import importlib.util
+
+    if importlib.util.find_spec("qiskit_ibm_runtime") is not None:
+        pytest.skip("hardware extra is installed")
+    with pytest.raises(ImportError, match="hardware"):
+        HardwareQuenchKernel(np.ones(2), np.zeros((2, 2)), backend_name="ibm_torino")
+
+
+def test_hardware_kernel_does_not_import_runtime() -> None:
+    import sys
+
+    before = {name for name in sys.modules if name.startswith("qiskit_ibm_runtime")}
+    HardwareQuenchKernel(np.ones(2), np.zeros((2, 2)), sampler=_ScriptedSampler(2))
+    after = {name for name in sys.modules if name.startswith("qiskit_ibm_runtime")}
+    assert after == before
+
+
+def test_hardware_propose_returns_binary_vector() -> None:
+    kernel = HardwareQuenchKernel(
+        np.ones(2),
+        np.zeros((2, 2)),
+        sampler=_ScriptedSampler(2),
+        pool_size=2,
+    )
+    rng = np.random.Generator(np.random.PCG64(0))
+    y, log_fwd, log_rev = kernel.propose(np.zeros(2, dtype=np.uint8), rng)
+    assert y.shape == (2,)
+    assert set(y.tolist()) <= {0, 1}
+    assert log_fwd == 0.0 and log_rev == 0.0
+
+
+def test_hardware_pool_hits_same_state() -> None:
+    sampler = _ScriptedSampler(2)
+    kernel = HardwareQuenchKernel(
+        np.ones(2),
+        np.zeros((2, 2)),
+        sampler=sampler,
+        pool_size=4,
+    )
+    rng = np.random.Generator(np.random.PCG64(0))
+    x = np.zeros(2, dtype=np.uint8)
+    for _ in range(4):
+        kernel.propose(x, rng)
+    assert kernel.jobs_submitted == 1
+    assert kernel.cache_misses == 1
+    assert kernel.cache_hits == 3
+    assert sampler.n_jobs == 1
+    assert sampler.batch_sizes == [4]
+    kernel.propose(x, rng)
+    assert kernel.jobs_submitted == 2
+    assert kernel.cache_misses == 2
+    assert sampler.n_jobs == 2
+
+
+def test_hardware_pool_misses_new_state() -> None:
+    sampler = _ScriptedSampler(2)
+    kernel = HardwareQuenchKernel(
+        np.ones(2),
+        np.zeros((2, 2)),
+        sampler=sampler,
+        pool_size=2,
+    )
+    rng = np.random.Generator(np.random.PCG64(1))
+    kernel.propose(np.zeros(2, dtype=np.uint8), rng)
+    kernel.propose(np.array([1, 0], dtype=np.uint8), rng)
+    assert kernel.jobs_submitted == 2
+    assert kernel.cache_misses == 2
+    assert kernel.cache_hits == 0
+    assert sampler.batch_sizes == [2, 2]
+
+
+def test_amplitude_damping_model_runs_on_aer() -> None:
+    target = _small_glass(3, seed=0)
+    model = amplitude_damping_noise_model(0.1)
+    kernel = _quench(target, backend="aer", evolution="trotter", noise_model=model)
+    rng = np.random.Generator(np.random.PCG64(0))
+    y, log_fwd, log_rev = kernel.propose(np.zeros(3, dtype=np.uint8), rng)
+    assert y.shape == (3,)
+    assert set(y.tolist()) <= {0, 1}
+    assert log_fwd == 0.0 and log_rev == 0.0
+
+
+def test_hardware_kernel_with_amplitude_damping_sampler() -> None:
+    target = _small_glass(3, seed=0)
+    sampler = AerCircuitSampler(noise_model=amplitude_damping_noise_model(0.05), shots=1)
+    kernel = HardwareQuenchKernel(target.h, target.J, sampler=sampler, pool_size=2)
+    rng = np.random.Generator(np.random.PCG64(2))
+    y, log_fwd, log_rev = kernel.propose(np.zeros(3, dtype=np.uint8), rng)
+    assert y.shape == (3,)
+    assert set(y.tolist()) <= {0, 1}
+    assert log_fwd == 0.0 and log_rev == 0.0
+    assert kernel.jobs_submitted == 1
+    assert sampler.n_jobs == 1
 
 
 def test_proposal_matrix_is_cached_across_calls() -> None:

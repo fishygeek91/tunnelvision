@@ -18,6 +18,7 @@ from typing import Any
 
 import numpy as np
 
+from tunnelvision.bits import states_to_indices
 from tunnelvision.diagnostics import ess, pip_error, rhat
 from tunnelvision.engine import MetropolisEngine
 
@@ -62,13 +63,16 @@ def run_replicated_chains(
     seeds: Sequence[int],
     x0: np.ndarray | Sequence[np.ndarray],
     exact_pips: np.ndarray | None = None,
+    exact_pi: np.ndarray | None = None,
 ) -> dict[str, Any]:
-    """Run independent MH chains and score ESS, R̂, and optional PIP error.
+    """Run independent MH chains and score ESS, R̂, and optional PIP / TV.
 
     ``x0`` is either one shared start or one start per chain. The
     sampled tier uses independent random starts so four chains parked
     in different modes cannot hide behind a shared empty-model launch.
-    Need ≥2 chains so split-R̂ is defined.
+    Need ≥2 chains so split-R̂ is defined. ``exact_pi`` is the
+    enumerated posterior; TV is how the E03 bias audit scores a
+    non-unital proposal against the exact target.
     """
     n_chains = len(seeds)
     if n_chains < 2:
@@ -146,4 +150,13 @@ def run_replicated_chains(
     else:
         scored["pip_error"] = None
         scored["pip_error_pooled"] = None
+    if exact_pi is not None:
+        pi = np.asarray(exact_pi, dtype=np.float64)
+        if pi.ndim != 1 or pi.size != (1 << n_vars):
+            raise ValueError(f"exact_pi must have length 2^{n_vars}, got {pi.shape}")
+        counts = np.bincount(states_to_indices(pooled), minlength=int(pi.size))
+        empirical = counts.astype(np.float64) / float(counts.sum())
+        scored["tv_distance"] = 0.5 * float(np.abs(empirical - pi).sum())
+    else:
+        scored["tv_distance"] = None
     return scored

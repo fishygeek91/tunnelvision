@@ -203,18 +203,20 @@ The exactness boundary. Pure numpy/scipy. Everything else is judged by this code
 
 ### WP6 — Hardware (P2 until E02 gates, 🔴)
 
-- [ ] `HardwareQuenchKernel` via qiskit-ibm-runtime; batched proposal
-      pools keyed by state, cached (states revisit constantly at p=10 —
-      cache hit rate will be high; log it).
+- [x] `HardwareQuenchKernel`: batched proposal pools keyed by state,
+      injected sampler (session path) or lazy `qiskit-ibm-runtime`
+      via `backend_name`. Cache hit/miss/job counters are logged.
       ⚠️ Credentials via env only — the .gitignore and cursor rules
       already enforce this; don't route around them in notebooks.
-- [ ] **The symmetric-q bias audit** (see ARCHITECTURE §2): amplitude
-      damping is non-unital ⇒ hardware proposals are only approximately
-      symmetric ⇒ our "exactness" claim needs an empirical bound. Run E02a
-      on hardware, compare sampled posterior to enumerated truth, report
-      the total-variation deviation. ⚠️ This audit is mandatory before ANY
-      hardware claim leaves the repo. It is the project's single biggest
-      correctness risk.
+      Live IBM jobs are still open (wired, not exercised).
+- [x] Aer amplitude-damping bias-audit *methodology* (see ARCHITECTURE
+      §2): `experiments/E03_maxwells_daemon/run_bias_audit.py` compares
+      sampled posteriors to enumerated truth under a non-unital
+      channel. Write-up in `results/E03/bias_audit/summary.md`.
+      ⚠️ This is not a QPU result. The live-hardware TV bound is
+      still mandatory before ANY hardware claim leaves the repo.
+- [ ] Live hardware TV bound: run the audit on IBM and report the
+      sampled-vs-enumerated total-variation deviation.
 - [ ] Physical noise rungs for E03 phase 2: DD on/off, twirling levels,
       inserted idle time.
 

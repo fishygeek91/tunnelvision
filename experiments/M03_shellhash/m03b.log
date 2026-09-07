@@ -1,0 +1,16 @@
+n=16 s=1 rand x0: med=136ms p90=156ms aborts=0 empty=0 m~8
+n=16 s=1 rand x1: med=64ms p90=68ms aborts=0 empty=0 m~10
+n=16 s=1 cold x0: med=138ms p90=157ms aborts=0 empty=0 m~8
+n=16 s=1 cold x1: med=141ms p90=253ms aborts=0 empty=0 m~8
+n=16 s=2 rand x0: med=62ms p90=72ms aborts=0 empty=0 m~10
+n=16 s=2 rand x1: med=68ms p90=105ms aborts=0 empty=0 m~10
+n=16 s=2 cold x0: med=2083ms p90=2327ms aborts=0 empty=0 m~4
+n=16 s=2 cold x1: med=1975ms p90=2353ms aborts=0 empty=0 m~4
+n=16 s=3 rand x0: med=64ms p90=67ms aborts=0 empty=0 m~10
+n=16 s=3 rand x1: med=65ms p90=67ms aborts=0 empty=0 m~10
+n=16 s=3 cold x0: med=2139ms p90=2354ms aborts=0 empty=0 m~4
+n=16 s=3 cold x1: med=2458ms p90=10495ms aborts=0 empty=0 m~4
+n=20 s=1 rand x0: med=115ms p90=128ms aborts=0 empty=0 m~14
+n=20 s=1 rand x1: med=146ms p90=161ms aborts=0 empty=0 m~13
+n=20 s=1 cold x0: med=74586ms p90=148264ms aborts=0 empty=0 m~4
+TRUNCATED 2026-09-01 after kill-criterion row landed (n=20 s=1 cold x0: med 74.586s, p90 148.264s, 0 aborts). Remaining cells redundant for the registered question; per-row cost ~1h at n=20 cold.

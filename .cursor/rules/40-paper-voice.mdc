@@ -1,0 +1,22 @@
+---
+description: Voice for the GitHub paper draft — methods note, not a pitch
+globs: docs/paper/**
+alwaysApply: false
+---
+
+# Paper voice
+
+Write like a methods note that found a negative. Not a pitch deck.
+
+- Results first when drafting. Intro last. Abstract last.
+- Short sentences. An occasional long one. Do not start three paragraphs
+  with the same cadence.
+- Banned: delve, landscape, robustly, play a crucial role, it is worth
+  noting, in this paper we, we propose a novel, multifaceted, leverage,
+  underscore, three contributions.
+- State the finding, then how we know. Do not announce a contribution list.
+- Orfi & Sels belong in the intro as the reason a loss is unsurprising.
+- First person plural only for things we did ("we enumerate 1024 models").
+- Hedge only what we did not measure (IBM, live Trotter mixing at p>10).
+  The p=10 gaps are not hedged.
+- PIP error did not move. The posterior did. That register, once, not as a bit.

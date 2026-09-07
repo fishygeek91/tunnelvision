@@ -1,0 +1,8 @@
+n=16 s=1 cold: log2S=8.58 (ok, 68.6s) med=0.573s p90=1.741s aborts=0 done=8/8
+n=16 s=2 cold: log2S=7.32 (ok, 107.8s) med=2.428s p90=4.675s aborts=0 done=8/8
+n=20 s=1 cold: log2S=13.21 (ok, 169.9s) med=0.901s p90=3.814s aborts=0 done=8/8
+n=20 s=2 cold: log2S=-1.0 (timeout, 900.0s) med=19.302s p90=81.261s aborts=0 done=8/8
+n=24 s=1 cold: log2S=-1.0 (timeout, 900.0s) med=560.06s p90=600.133s aborts=2 done=2/8
+n=24 s=2 cold: log2S=-1.0 (timeout, 900.0s) med=1823.537s p90=1823.537s aborts=0 done=1/8
+n=28 s=1 cold: log2S=-1.0 (timeout, 900.0s) med=575.291s p90=579.648s aborts=2 done=2/8
+TRUNCATED 2026-09-01: n=28 seed2 first sample still running >30 min past count timeout; deeper cold cells censored at cell caps (registered: timeouts are data). Rand controls in m04a_rand.csv.

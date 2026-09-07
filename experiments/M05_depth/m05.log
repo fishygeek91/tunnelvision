@@ -11,3 +11,4 @@ s=2 T=15.0: E/n=+0.329 log2S=16.86 | CMS med=0.165s ab=0 cens=0 | Exact enum=17[
 s=2 T= 8.0: E/n=-1.923 log2S=-2.0 | CMS med=4.439s ab=0 cens=0 | Exact enum=17[ok]0.09s count=TIMEOUT:2642(120.03s)
 s=2 T= 5.0: E/n=-2.126 log2S=-2.0 | CMS med=4.275s ab=0 cens=0 | Exact enum=17[ok]0.49s count=SAT:1277(119.84s)
 s=2 T= 3.5: E/n=-2.762 log2S=-2.0 | CMS med=1475.698s ab=0 cens=1 | Exact enum=17[ok]20.84s count=SAT:44(50.87s)
+s=2 T= 2.5: E/n=-2.833 log2S=-2.0 | CMS med=425.244s ab=1 cens=1 | Exact enum=17[ok]25.27s count=SAT:26(46.63s)

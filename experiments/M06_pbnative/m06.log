@@ -1,0 +1,21 @@
+n=16 s=1 T=0.55√n: E/n=-1.735 mode=enum |S|=262 t_med=3.544s max=3.648s cens=0 cms=12.8s
+n=16 s=1 T=0.35√n: E/n=-2.287 mode=enum |S|=3 t_med=1.298s max=1.31s cens=0 cms=59.4s
+n=16 s=2 T=0.55√n: E/n=-2.121 mode=enum |S|=55 t_med=2.578s max=2.638s cens=0 cms=34.7s
+n=16 s=2 T=0.35√n: E/n=-2.356 mode=enum |S|=4 t_med=2.078s max=2.097s cens=0 cms=59.6s
+n=20 s=1 T=0.55√n: E/n=-2.574 mode=enum |S|=146 t_med=47.065s max=48.087s cens=0 cms=608.7s
+n=20 s=1 T=0.35√n: E/n=-3.293 mode=empty |S|=0 t_med=31.337s max=31.836s cens=0 cms=216.3s
+n=20 s=2 T=0.55√n: E/n=-2.777 mode=enum |S|=34 t_med=41.074s max=41.933s cens=0 cms=1383.7s
+n=20 s=2 T=0.35√n: E/n=-2.839 mode=enum |S|=26 t_med=40.691s max=41.146s cens=0 cms=316.9s
+n=24 s=1 T=0.55√n: E/n=-1.608 mode=hash |S|=-1 t_med=27.163s max=85.141s cens=0 cms=nans
+n=24 s=1 T=0.35√n: E/n=-2.931 mode=abort |S|=10 t_med=301.656s max=301.656s cens=1 cms=nans
+n=24 s=2 T=0.55√n: E/n=-3.239 mode=abort |S|=11 t_med=300.086s max=300.086s cens=1 cms=nans
+n=24 s=2 T=0.35√n: E/n=-3.259 mode=abort |S|=48 t_med=301.67s max=301.67s cens=1 cms=nans
+n=28 s=1 T=0.55√n: E/n=-3.544 mode=abort |S|=0 t_med=305.335s max=305.335s cens=1 cms=nans
+n=28 s=1 T=0.35√n: E/n=-3.544 mode=abort |S|=0 t_med=300.815s max=300.815s cens=1 cms=nans
+n=28 s=2 T=0.55√n: E/n=-3.285 mode=abort |S|=17 t_med=305.176s max=305.176s cens=1 cms=nans
+n=28 s=2 T=0.35√n: E/n=-3.154 mode=abort |S|=10 t_med=301.014s max=301.014s cens=1 cms=nans
+n=32 s=1 T=0.55√n: E/n=-3.500 mode=abort |S|=0 t_med=305.501s max=305.501s cens=1 cms=nans
+n=32 s=1 T=0.35√n: E/n=-3.841 mode=abort |S|=0 t_med=302.533s max=302.533s cens=1 cms=nans
+n=32 s=2 T=0.55√n: E/n=-3.478 mode=abort |S|=0 t_med=302.903s max=302.903s cens=1 cms=nans
+n=32 s=2 T=0.35√n: E/n=-3.995 mode=abort |S|=0 t_med=304.814s max=304.814s cens=1 cms=nans
+done

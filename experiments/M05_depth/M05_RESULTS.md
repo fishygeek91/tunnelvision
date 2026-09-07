@@ -89,3 +89,14 @@ substantially a CNF-translation artifact.
    the local level spacing. Measure |S(ε)| along the ladder.
 3. Depth-resolved figure for the paper only after M06, with the native
    solver — the CNF curve above is a fact about CNF, not about physics.
+
+---
+**Note 2026-09-07 (after M06):** the `exact_enum=17` column in
+m05_unified.csv over-counts for shells with fewer than 17 members: the
+enumeration loop treated Exact's stale `hasSolution()` after UNSAT as a
+new solution (fixed in `shellexact.py`). The *timings* stand: for
+|S| ≥ 17 they measure 17 distinct members; for |S| < 17 they measure
+complete enumeration + the UNSAT proof (and match the `count` timings to
+the second). The 10–3,500× CMS-vs-Exact comparisons are unaffected in
+substance. M06 supersedes M05 for the PB-native cost of an *exact*
+proposal (which needs the completeness proof).

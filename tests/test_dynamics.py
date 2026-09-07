@@ -265,3 +265,27 @@ def test_shellhash_bin_mode_stays_in_bin():
         assert bx == by
         done += 1
     assert done >= 10
+
+
+# ------------------------------------------------------------ M06: Exact PB
+
+
+def test_exact_shell_enumeration_matches_numpy():
+    """PB-native (Exact) shell enumeration == numpy-enumerated integer
+    shell, exactly, on several states — no CNF anywhere in the path."""
+    pytest.importorskip("exact")
+    from tunnelvision.dynamics.shellexact import ExactShellSampler
+    from tunnelvision.dynamics.shellhash import ShellHashSampler
+
+    tgt = random_spin_glass(8, seed=1, temperature=1.0, random_fields=True)
+    ex = ExactShellSampler(tgt.J, tgt.h, eps=2.0, seed=0)
+    sh = ShellHashSampler(tgt.J, tgt.h, eps=2.0, seed=0)
+    rng = np.random.default_rng(3)
+    pw = 1 << np.arange(8)
+    for _ in range(6):
+        x = rng.integers(0, 2, 8).astype(np.uint8)
+        members, status = ex.enumerate(x, cap=1 << 9)
+        assert status == "complete"
+        got = sorted(int(m @ pw) for m in members)
+        want = sorted(int(i) for i in sh.exact_shell_indices(x))
+        assert got == want

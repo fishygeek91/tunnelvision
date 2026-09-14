@@ -1,5 +1,8 @@
 # TunnelVision
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22758619.svg)](https://doi.org/10.5281/zenodo.22758619)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > Exact Bayesian variable selection with quantum tunneling proposals. Quantum proposes; Metropolis accepts. The mixing advantage, on this target, is not there.
 
 TunnelVision is a research codebase that puts **quantum-enhanced MCMC** (Layden et al., [Nature 619, 282 (2023)](https://arxiv.org/abs/2203.12497)) inside an exact Metropolis–Hastings sampler for **spike-and-slab Bayesian variable selection**. The quantum device only *proposes*; accept/reject uses the exact g-prior. Unital noise can slow the chain without biasing it. Non-unital noise (amplitude damping / T1) can bias it if you still pretend the proposal is symmetric — we measured that.
@@ -49,3 +52,14 @@ reproducibility record for every experiment. (`pip install -e ".[dev]"` still wo
 E01–E03 and the Aer bias audit are in. The experiment spine is done.
 The remaining electives are a live IBM TV bound and Ferguson-style
 coarse-graining. Draft: `docs/paper/paper.md`.
+
+Update (v1.0.0): the **P01 PORTAL race** (`experiments/P01_portal/`) tested an
+amortized architecture — a device- or solver-mined proposal library consumed by exact
+mode-jumping — under pre-registered kill criteria; both kills fired (classical miners
+match the quench's mode coverage at matched budget; darting gain < 2× over parallel
+tempering at n = 50–200). A **free-certificate theorem** (`docs/free_certificate.md`)
+shows conserved charges confine measurements to a symmetry sector at zero cost while
+preserving evaluation-free exactness. This repo is archived alongside
+[goldilocks](https://github.com/fishygeek91/goldilocks) at
+**[10.5281/zenodo.22758619](https://doi.org/10.5281/zenodo.22758619)**.
+

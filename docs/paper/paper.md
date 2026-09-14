@@ -1,6 +1,6 @@
 # Quantum-enhanced MCMC for spike-and-slab variable selection
 
-TunnelVision draft · August 2026 · [github.com/fishygeek91/tunnelvision](https://github.com/fishygeek91/tunnelvision)
+Dustin Kovac · TunnelVision draft · August 2026 · [github.com/fishygeek91/tunnelvision](https://github.com/fishygeek91/tunnelvision)
 
 Numbers below are copied from the tracked experiment summaries. They are not rounded for effect. This is not a hardware paper.
 

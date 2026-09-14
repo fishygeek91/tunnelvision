@@ -1,0 +1,13 @@
+{'n': 50, 'seed': 1, 'T_factor': 0.55, 'screen_rhat': 1.015, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+{'n': 50, 'seed': 1, 'T_factor': 0.35, 'screen_rhat': 1.724, 'valid_for_k2': 1, 'n_atoms': 3, 'build_s': 31.3, 'portal_ess_sec': 120.4474, 'portal_ess_step': 0.00240628, 'portal_rhat': 1.581, 'portal_acc': 0.0091, 'pticm_ess_sec': 135.1127, 'pticm_ess_step': 0.0020889, 'pticm_rhat': 1.013, 'gain': 0.891, 'gain_amortized': 0.101}
+{'n': 50, 'seed': 2, 'T_factor': 0.55, 'screen_rhat': 1.6086, 'valid_for_k2': 1, 'n_atoms': 3, 'build_s': 31.5, 'portal_ess_sec': 198.9921, 'portal_ess_step': 0.00426241, 'portal_rhat': 1.007, 'portal_acc': 0.0, 'pticm_ess_sec': 171.191, 'pticm_ess_step': 0.00259349, 'pticm_rhat': 1.002, 'gain': 1.162, 'gain_amortized': 0.139}
+{'n': 50, 'seed': 2, 'T_factor': 0.35, 'screen_rhat': 2.5726, 'valid_for_k2': 1, 'n_atoms': 3, 'build_s': 31.0, 'portal_ess_sec': 250.0308, 'portal_ess_step': 0.00502513, 'portal_rhat': 1.002, 'portal_acc': 0.0, 'pticm_ess_sec': 210.4301, 'pticm_ess_step': 0.00254822, 'pticm_rhat': 1.055, 'gain': 1.188, 'gain_amortized': 0.136}
+{'n': 100, 'seed': 1, 'T_factor': 0.55, 'screen_rhat': 1.0491, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+{'n': 100, 'seed': 1, 'T_factor': 0.35, 'screen_rhat': 1.2749, 'valid_for_k2': 1, 'n_atoms': 2, 'build_s': 38.3, 'portal_ess_sec': 38.8812, 'portal_ess_step': 0.00086091, 'portal_rhat': 1.218, 'portal_acc': 0.0, 'pticm_ess_sec': 81.8684, 'pticm_ess_step': 0.00129083, 'pticm_rhat': 1.01, 'gain': 0.475, 'gain_amortized': 0.049}
+{'n': 100, 'seed': 2, 'T_factor': 0.55, 'screen_rhat': 1.1166, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+{'n': 100, 'seed': 2, 'T_factor': 0.35, 'screen_rhat': 1.3645, 'valid_for_k2': 1, 'n_atoms': 2, 'build_s': 37.0, 'portal_ess_sec': 30.5642, 'portal_ess_step': 0.00067936, 'portal_rhat': 1.481, 'portal_acc': 0.0, 'pticm_ess_sec': 66.5939, 'pticm_ess_step': 0.00109667, 'pticm_rhat': 1.022, 'gain': 0.459, 'gain_amortized': 0.049}
+{'n': 200, 'seed': 1, 'T_factor': 0.55, 'screen_rhat': 1.0878, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+{'n': 200, 'seed': 1, 'T_factor': 0.35, 'screen_rhat': 2.5921, 'valid_for_k2': 1, 'n_atoms': 1, 'build_s': 57.7, 'portal_ess_sec': 39.6686, 'portal_ess_step': 0.00109246, 'portal_rhat': 1.037, 'portal_acc': 0.0, 'pticm_ess_sec': 22.616, 'pticm_ess_step': 0.00052709, 'pticm_rhat': 1.023, 'gain': 1.754, 'gain_amortized': 0.153}
+{'n': 200, 'seed': 2, 'T_factor': 0.55, 'screen_rhat': 1.1588, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+{'n': 200, 'seed': 2, 'T_factor': 0.35, 'screen_rhat': 1.1786, 'valid_for_k2': 0, 'note': 'baseline mixes; INVALID for K2'}
+done
